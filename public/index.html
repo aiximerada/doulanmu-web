@@ -3,105 +3,240 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>朵藍姆光工作室 | 宇宙頻率中找回內在力量</title>
+    <title>朵藍姆光工作室 | 在宇宙頻率中找回內在力量</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=PingFang+TC:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
     <style>
-        /* 這裡放的是 CSS，用來設計顏色的排版 */
+        /* --- 基礎設定與星空背景 --- */
         body {
             margin: 0;
             font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
-            background: linear-gradient(135deg, #1a0b2e 0%, #3b185f 100%); /* 宇宙星空底色 */
+            background: linear-gradient(135deg, #0f051a 0%, #2a1147 50%, #1a0b2e 100%);
             color: #fce4ec;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
+
+        /* 標題套用明體，增添靈性優雅感 */
+        h1, h2, h3 {
+            font-family: 'Noto Serif TC', serif;
+            letter-spacing: 2px;
+        }
+
+        /* --- 頂部導覽列 --- */
+        .nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 5%;
+            position: absolute;
+            top: 0;
+            width: 90%;
+            z-index: 1000;
+        }
+        .logo-text {
+            font-family: 'Noto Serif TC', serif;
+            font-size: 1.5em;
+            color: #d4af37;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* LINE 登入按鈕優化 */
+        .btn-line {
+            background-color: #06C755;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 30px; /* 變得更圓潤 */
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95em;
+            box-shadow: 0 4px 15px rgba(6, 199, 85, 0.3);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .btn-line:hover {
+            background-color: #05b34c;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(6, 199, 85, 0.4);
+        }
+
+        /* --- Hero 主視覺區塊 --- */
         header {
             text-align: center;
-            padding: 100px 20px;
-            background: radial-gradient(circle, rgba(212,175,55,0.2) 0%, rgba(0,0,0,0) 70%); /* 柔和金紫光暈 */
+            padding: 180px 20px 100px;
+            background: radial-gradient(circle at center, rgba(212,175,55,0.08) 0%, rgba(0,0,0,0) 60%);
         }
-        h1 {
-            color: #d4af37; /* 金色 */
-            font-size: 2.5em;
-            margin-bottom: 10px;
+        h1 { 
+            color: #d4af37; 
+            font-size: 3.2em; 
+            margin-bottom: 20px; 
+            /* 能量呼吸發光動畫 */
+            animation: glow 3s ease-in-out infinite alternate;
         }
-        h2 {
+        @keyframes glow {
+            from { text-shadow: 0 0 10px rgba(212,175,55,0.3); }
+            to { text-shadow: 0 0 25px rgba(212,175,55,0.8), 0 0 10px rgba(255,255,255,0.3); }
+        }
+        .subtitle {
             font-size: 1.2em;
-            font-weight: normal;
-            margin-bottom: 30px;
+            color: #e0d4f5;
+            font-weight: 300;
+            letter-spacing: 3px;
+            margin-bottom: 40px;
         }
-        .btn {
-            background-color: #d4af37;
+
+        /* 主按鈕設計 */
+        .cta-group { margin-top: 40px; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+        .btn-main {
+            background: linear-gradient(135deg, #d4af37 0%, #b8901b 100%);
             color: #1a0b2e;
-            padding: 15px 30px;
+            padding: 16px 40px;
             text-decoration: none;
-            border-radius: 25px;
+            border-radius: 50px;
             font-weight: bold;
-            margin: 0 10px;
-            display: inline-block;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(212,175,55,0.3);
         }
-        .btn:hover {
-            background-color: #f1c40f;
+        .btn-main:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 8px 25px rgba(212,175,55,0.5); 
         }
+        .btn-outline {
+            background: rgba(255,255,255,0.05);
+            color: #d4af37;
+            border: 1px solid #d4af37;
+            padding: 16px 40px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: bold;
+            transition: all 0.3s;
+            backdrop-filter: blur(5px);
+        }
+        .btn-outline:hover { background: rgba(212,175,55,0.1); transform: translateY(-3px); }
+
+        /* --- 服務卡片區塊 (毛玻璃網格設計) --- */
         .services-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            padding: 50px 20px;
-            gap: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 30px;
+            padding: 0 8% 100px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
         .card {
-            background-color: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(212,175,55,0.3);
-            border-radius: 10px;
-            padding: 20px;
-            width: 250px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(212,175,55,0.15);
+            border-radius: 20px;
+            padding: 40px 30px;
             text-align: center;
+            backdrop-filter: blur(12px); /* 毛玻璃特效 */
+            -webkit-backdrop-filter: blur(12px);
+            transition: all 0.4s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
         }
-        .card h3 {
-            color: #d4af37;
+        /* 卡片頂部的裝飾光線 */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(212,175,55,0.5), transparent);
         }
-        footer {
-            text-align: center;
-            padding: 20px;
-            background-color: #11051f;
-            font-size: 0.9em;
+        .card:hover { 
+            transform: translateY(-10px); 
+            border-color: rgba(212,175,55,0.5); 
+            background: rgba(255, 255, 255, 0.06);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+        .card-icon { font-size: 2.5em; margin-bottom: 20px; }
+        .card h3 { color: #d4af37; font-size: 1.4em; margin-bottom: 15px; }
+        .card p { color: #c4b5d6; line-height: 1.8; font-size: 0.95em; }
+
+        /* --- 頁尾 --- */
+        footer { 
+            text-align: center; 
+            padding: 40px 20px; 
+            background: rgba(0,0,0,0.3); 
+            color: #7a6b8c; 
+            font-size: 0.9em; 
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* --- 手機版 RWD 微調 --- */
+        @media (max-width: 768px) {
+            h1 { font-size: 2.2em; }
+            .subtitle { font-size: 1em; }
+            header { padding: 140px 20px 60px; }
+            .nav-header { flex-direction: column; gap: 15px; padding: 15px; }
+            .logo-text { font-size: 1.3em; }
         }
     </style>
 </head>
 <body>
 
-    <header id="hero">
+    <nav class="nav-header">
+        <div class="logo-text">朵藍姆光工作室</div>
+        <button class="btn-line" onclick="loginWithLine()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M24 10.237C24 4.584 18.618 0 12 0C5.382 0 0 4.584 0 10.237C0 15.352 4.29 19.648 9.851 20.317C10.235 20.395 10.603 20.57 10.742 20.941C10.865 21.282 10.796 21.844 10.73 22.215C10.73 22.215 10.518 23.492 10.457 23.943C10.394 24.39 10.781 24.542 11.141 24.364C11.5 24.185 16.715 21.1 19.896 17.589C22.427 14.852 24 12.693 24 10.237Z"/></svg>
+            LINE 快速登入
+        </button>
+    </nav>
+
+    <header>
         <h1>在宇宙頻率中找回你的內在力量</h1>
-        <h2>朵藍姆光工作室｜天使訊息｜能量調整｜靈性創作</h2>
-        <a href="#booking" class="btn">預約靈性個案</a>
-        <a href="#services" class="btn">了解服務</a>
+        <div class="subtitle">天使訊息解讀 ｜ 個人能量調整 ｜ 靈性手作產品</div>
+        <div class="cta-group">
+            <a href="#" class="btn-main">預約靈性個案</a>
+            <a href="#" class="btn-outline">探索光語產品</a>
+        </div>
     </header>
 
-    <section id="services" class="services-container">
+    <section class="services-container">
         <div class="card">
-            <h3>👼 天使訊息</h3>
-            <p>天使訊息解讀<br>天使畫個案</p>
+            <div class="card-icon">👼</div>
+            <h3>天使訊息</h3>
+            <p>透過高頻率的連結，為你傳遞當下最需要的天使訊息解讀與專屬天使畫個案。</p>
         </div>
         <div class="card">
-            <h3>✨ 能量調整</h3>
-            <p>個人能量調整<br>光語圖騰療法<br>Healy 頻率調整</p>
+            <div class="card-icon">✨</div>
+            <h3>能量調整</h3>
+            <p>運用光語圖騰療法與 Healy 頻率儀器，深層清理阻礙，讓身心靈回歸平衡狀態。</p>
         </div>
         <div class="card">
-            <h3>🎨 靈性藝術課程</h3>
-            <p>曼陀羅彩繪<br>手作課程</p>
+            <div class="card-icon">🎨</div>
+            <h3>靈性藝術課程</h3>
+            <p>帶領你透過曼陀羅彩繪靜心，或是親手製作屬於自己的高頻能量手工皂。</p>
         </div>
         <div class="card">
-            <h3>🌿 能量產品</h3>
-            <p>淨化噴霧 / 除障手工皂<br>能量蠟燭 / 甜點擴香石</p>
+            <div class="card-icon">🌿</div>
+            <h3>光語能量產品</h3>
+            <p>嚴選成分製作的淨化噴霧、除障手工皂、能量蠟燭與蜜蠟花，將好頻率帶入生活。</p>
         </div>
-    </section>
-
-    <section style="text-align: center; padding: 50px 20px;">
-        <h3 style="color: #d4af37;">品牌理念</h3>
-        <p>每個人都擁有與宇宙共振的能力。<br>我陪伴你重新聽見內在的聲音，啟動生命光。</p>
     </section>
 
     <footer>
-        <p>© 2026 朵藍姆光工作室 DouLanMu.com. All Rights Reserved.</p>
+        <p>© 2026 朵藍姆光工作室 DouLanMu.com<br>讓每個人都重新聽見內在的聲音，啟動生命光。</p>
     </footer>
 
+    <script>
+        // --- 之後這裡會放 Firebase 與 LINE 的連線設定 ---
+        function loginWithLine() {
+            alert("正在準備前往 LINE 登入頁面...");
+            // 稍後我們會把這裡換成真正的 LINE 跳轉代碼
+        }
+    </script>
 </body>
 </html>
