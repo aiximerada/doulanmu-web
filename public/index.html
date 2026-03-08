@@ -160,23 +160,57 @@
 
     <script>
         const modal = document.getElementById('loginModal');
-        
         function openLoginModal() { modal.classList.add('active'); }
         function closeLoginModal() { modal.classList.remove('active'); }
         modal.addEventListener('click', function(e) { if (e.target === this) { closeLoginModal(); } });
 
-        // --- 登入邏輯準備區 ---
+        // 🌟 你的 Firebase 真實金鑰 🌟
+        const firebaseConfig = {
+            apiKey: "AIzaSyAwbENzVJ0-SWFv7DwU-I0IrIGTg1uOGKs",
+            authDomain: "duolanmu.firebaseapp.com",
+            projectId: "duolanmu",
+            storageBucket: "duolanmu.firebasestorage.app",
+            messagingSenderId: "11171522617",
+            appId: "1:11171522617:web:5d4cad219e3f903fba05e8",
+            measurementId: "G-5BJGQYRF3E"
+        };
+        
+        // 確保 Firebase 只初始化一次
+        if (!firebase.apps.length) { 
+            firebase.initializeApp(firebaseConfig); 
+        }
+
+        // --- 真正的帳號密碼登入邏輯 ---
         function loginWithAccount() {
             const acc = document.getElementById('accountInput').value;
             const pwd = document.getElementById('passwordInput').value;
+            
             if(!acc || !pwd) {
                 alert("請輸入帳號與密碼！");
                 return;
             }
-            alert("準備將帳號 [" + acc + "] 送去 Firebase 資料庫驗證...");
-            // 稍後會在這裡寫入 Firebase 的驗證程式碼
+
+            // 呼叫 Firebase 進行身分驗證
+            firebase.auth().signInWithEmailAndPassword(acc, pwd)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    
+                    // 🌟 嚴格檢查老闆專屬 UID！
+                    if(user.uid === "zaq6RAandkQmPGFKwBdeZEWoArC2") {
+                        alert("歡迎老闆回來！準備為您開啟專屬後台...");
+                        window.location.href = "admin.html"; // 老闆專屬跳轉
+                    } else {
+                        alert("登入成功！歡迎回到朵藍姆光工作室。");
+                        closeLoginModal(); // 一般客人留在前台
+                    }
+                })
+                .catch((error) => {
+                    alert("登入失敗，請檢查帳號密碼是否正確。");
+                    console.error("錯誤代碼:", error.code, "錯誤訊息:", error.message);
+                });
         }
 
+        // --- LINE 登入準備區 ---
         function loginWithLine() {
             alert("即將為您串接 LINE 登入！");
         }
