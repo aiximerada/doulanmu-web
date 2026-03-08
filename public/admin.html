@@ -5,48 +5,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>朵藍姆光工作室 | 專屬管理後台</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=PingFang+TC:wght@300;400;600&display=swap" rel="stylesheet">
-    
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
     <style>
-        body { margin: 0; font-family: 'PingFang TC', sans-serif; background: #f4f6f9; color: #333; }
-        .admin-header { background: #1a0b2e; color: #d4af37; padding: 20px 5%; display: flex; justify-content: space-between; align-items: center; }
-        .admin-title { font-family: 'Noto Serif TC', serif; font-size: 1.5em; font-weight: bold; }
-        .btn-logout { background: transparent; color: #fce4ec; border: 1px solid #fce4ec; padding: 8px 15px; border-radius: 5px; cursor: pointer; transition: 0.3s; }
-        .btn-logout:hover { background: #fce4ec; color: #1a0b2e; }
-        
-        .dashboard { padding: 40px 5%; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
-        .admin-card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); text-align: center; border-top: 4px solid #d4af37; transition: 0.3s; cursor: pointer; }
-        .admin-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
-        .admin-card h3 { color: #1a0b2e; margin-bottom: 10px; }
-        .admin-card p { color: #888; font-size: 0.9em; }
+        body { margin: 0; font-family: 'PingFang TC', sans-serif; background: #f4f6f9; display: flex; min-height: 100vh; }
+        .sidebar { width: 250px; background: #1a0b2e; color: #fce4ec; padding-top: 20px; box-shadow: 2px 0 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        .sidebar-brand { font-family: 'Noto Serif TC', serif; font-size: 1.4em; font-weight: bold; color: #d4af37; text-align: center; margin-bottom: 30px; padding: 0 20px; }
+        .nav-item { padding: 15px 25px; color: #c4b5d6; text-decoration: none; display: block; transition: 0.3s; font-size: 1.05em; cursor: pointer; }
+        .nav-item:hover, .nav-item.active { background: rgba(212,175,55,0.1); color: #d4af37; border-left: 4px solid #d4af37; }
+        .spacer { flex-grow: 1; }
+        .logout-btn { padding: 15px 25px; background: #c0392b; color: white; border: none; width: 100%; text-align: left; font-size: 1.05em; cursor: pointer; transition: 0.3s; }
+        .logout-btn:hover { background: #e74c3c; }
+        .main-content { flex: 1; padding: 40px; overflow-y: auto; }
+        .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .top-header h2 { margin: 0; color: #333; }
+        .admin-badge { background: #d4af37; color: #1a0b2e; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9em; }
+        .dashboard-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 40px; }
+        .stat-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border-left: 5px solid #d4af37; }
+        .stat-card h4 { margin: 0 0 10px 0; color: #888; font-weight: normal; }
+        .stat-card .number { font-size: 2em; font-weight: bold; color: #1a0b2e; margin: 0; }
+        .content-panel { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+        .content-panel h3 { margin-top: 0; color: #333; border-bottom: 2px solid #f4f6f9; padding-bottom: 10px; }
+        @media (max-width: 768px) { body { flex-direction: column; } .sidebar { width: 100%; height: auto; } .main-content { padding: 20px; } }
     </style>
 </head>
 <body>
 
-    <div class="admin-header">
-        <div class="admin-title">朵藍姆光工作室｜管理員後台</div>
-        <button class="btn-logout" onclick="logout()">登出系統</button>
+    <div class="sidebar">
+        <div class="sidebar-brand">朵藍姆光工作室<br><span style="font-size: 0.6em; color: #888;">管理員後台系統</span></div>
+        <a class="nav-item active">📊 系統儀表板</a>
+        <a class="nav-item">🌿 手作商品管理</a>
+        <a class="nav-item">📅 課程預約名單</a>
+        <a class="nav-item">👥 會員與訂單</a>
+        <a class="nav-item">⚙️ LINE 串接設定</a>
+        <div class="spacer"></div>
+        <button class="logout-btn" onclick="logout()">登出系統 ➔</button>
     </div>
 
-    <div class="dashboard">
-        <div class="admin-card">
-            <h3>🌿 手作產品管理</h3>
-            <p>上架或修改能量皂、精油滾珠瓶等商品資訊與庫存</p>
+    <div class="main-content">
+        <div class="top-header">
+            <h2>系統儀表板</h2>
+            <div class="admin-badge">⭐ 系統管理員</div>
         </div>
-        <div class="admin-card">
-            <h3>📅 靈性課程與個案</h3>
-            <p>管理光語圖騰療法、曼陀羅彩繪的開課時間與名單</p>
+
+        <div class="dashboard-cards">
+            <div class="stat-card"><h4>本月新增會員</h4><p class="number">12</p></div>
+            <div class="stat-card"><h4>待處理訂單</h4><p class="number" style="color: #e67e22;">3</p></div>
+            <div class="stat-card"><h4>近期預約個案</h4><p class="number">5</p></div>
         </div>
-        <div class="admin-card">
-            <h3>👥 會員與訂單</h3>
-            <p>查看目前註冊的學員名單與產品預購狀況</p>
+
+        <div class="content-panel">
+            <h3>近期系統動態</h3>
+            <p style="color: #666; line-height: 1.8;">
+                ✅ 系統升級成功：已啟用「記住設備」與「自動感應登入」功能。<br>
+                ✅ 安全防護已啟動：目前僅有系統管理員可進入此頁面。<br>
+                ⏳ 待辦事項：準備串接 LINE 快速登入 API。
+            </p>
         </div>
     </div>
 
     <script>
-        // 🌟 你的 Firebase 真實金鑰 🌟
         const firebaseConfig = {
             apiKey: "AIzaSyAwbENzVJ0-SWFv7DwU-I0IrIGTg1uOGKs",
             authDomain: "duolanmu.firebaseapp.com",
@@ -56,29 +75,20 @@
             appId: "1:11171522617:web:5d4cad219e3f903fba05e8",
             measurementId: "G-5BJGQYRF3E"
         };
-        
-        // 確保 Firebase 只初始化一次
-        if (!firebase.apps.length) { 
-            firebase.initializeApp(firebaseConfig); 
-        }
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
 
-        // 🌟 安全守門員：認 UID 不認人！
         firebase.auth().onAuthStateChanged((user) => {
             if (!user) {
-                // 如果沒登入，踢回首頁
-                alert("請先登入！");
                 window.location.href = "index.html";
             } else {
-                // 如果登入的 UID 不是老闆的 UID，立刻踢出！
                 const adminUID = "zaq6RAandkQmPGFKwBdeZEWoArC2"; 
                 if (user.uid !== adminUID) {
-                    alert("您沒有管理員權限喔！");
+                    alert("您沒有管理員權限喔！已將您踢回首頁。");
                     window.location.href = "index.html";
                 }
             }
         });
 
-        // 登出功能
         function logout() {
             firebase.auth().signOut().then(() => {
                 window.location.href = "index.html";
