@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>登入中...</title>
+</head>
+<body>
+    <script>
+        // 這是接收 LINE 回傳 code 的地方
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+
+        if (code) {
+            // 拿到代碼後，我們會傳給 Firebase 處理
+            console.log("拿到 LINE 授權碼了:", code);
+            document.body.innerHTML = "<h1>登入成功，正在導回首頁...</h1>";
+            setTimeout(() => { window.location.href = "index.html"; }, 2000);
+        } else {
+            document.body.innerHTML = "<h1>登入失敗，請稍後再試。</h1>";
+        }
+    </script>
+</body>
+</html>
