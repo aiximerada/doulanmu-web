@@ -3,45 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>朵藍姆光工作室 | 模組化升級版</title>
+    <title>朵藍姆光工作室 | 專屬能量商店</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=PingFang+TC:wght@300;400;600&display=swap" rel="stylesheet">
     
     <style>
-        /* CSS 樣式完全沒變，保持星空美感 */
+        /* --- 星空質感基礎設定 --- */
         body { margin: 0; font-family: 'PingFang TC', sans-serif; background: linear-gradient(135deg, #0f051a 0%, #2a1147 50%, #1a0b2e 100%); color: #fce4ec; min-height: 100vh; overflow-x: hidden; }
         h1, h2, h3 { font-family: 'Noto Serif TC', serif; letter-spacing: 2px; }
-        .nav-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 5%; position: absolute; top: 0; width: 90%; z-index: 1000; }
-        .logo-text { font-family: 'Noto Serif TC', serif; font-size: 1.5em; color: #d4af37; font-weight: bold; }
-        .btn-login-nav { background: rgba(255, 255, 255, 0.1); color: #fce4ec; padding: 8px 24px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.3); cursor: pointer; transition: 0.3s; }
-        .btn-login-nav:hover { background: rgba(255, 255, 255, 0.2); border-color: #d4af37; color: #d4af37; }
-        .btn-boss-mode { background: #d4af37; color: #1a0b2e; font-weight: bold; border: none; box-shadow: 0 0 10px rgba(212,175,55,0.5); }
         
+        /* --- 導覽列 --- */
+        .nav-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 5%; position: absolute; top: 0; width: 90%; z-index: 1000; }
+        .logo-text { font-family: 'Noto Serif TC', serif; font-size: 1.5em; color: #d4af37; font-weight: bold; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        .btn-login-nav { background: rgba(255, 255, 255, 0.1); color: #fce4ec; padding: 8px 24px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.3); cursor: pointer; transition: 0.3s; font-weight: bold; }
+        .btn-login-nav:hover { background: rgba(255, 255, 255, 0.2); border-color: #d4af37; color: #d4af37; }
+        .btn-boss-mode { background: #d4af37; color: #1a0b2e; border: none; box-shadow: 0 0 10px rgba(212,175,55,0.5); }
+
+        /* --- 主視覺 --- */
+        header { text-align: center; padding: 160px 20px 60px; }
+        h1 { color: #d4af37; font-size: 3em; margin-bottom: 15px; text-shadow: 0 0 20px rgba(212,175,55,0.4); }
+        .subtitle { font-size: 1.1em; color: #c4b5d6; letter-spacing: 2px; margin-bottom: 40px; }
+
+        /* --- 三大商品分類入口 --- */
+        .category-container { display: flex; justify-content: center; gap: 30px; padding: 0 5% 100px; flex-wrap: wrap; max-width: 1200px; margin: 0 auto; }
+        .category-card { 
+            flex: 1; min-width: 280px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(212,175,55,0.2); 
+            border-radius: 20px; padding: 50px 30px; text-align: center; backdrop-filter: blur(10px); 
+            transition: all 0.4s ease; text-decoration: none; color: white; display: block;
+        }
+        .category-card:hover { transform: translateY(-10px); border-color: #d4af37; background: rgba(255, 255, 255, 0.08); box-shadow: 0 15px 30px rgba(0,0,0,0.5); }
+        .category-icon { font-size: 3.5em; margin-bottom: 20px; display: block; }
+        .category-card h3 { color: #d4af37; font-size: 1.6em; margin-bottom: 15px; }
+        .category-card p { color: #c4b5d6; line-height: 1.6; font-size: 0.95em; margin-bottom: 30px; }
+        .btn-enter { background: transparent; color: #d4af37; border: 1px solid #d4af37; padding: 10px 30px; border-radius: 30px; transition: 0.3s; font-weight: bold; }
+        .category-card:hover .btn-enter { background: #d4af37; color: #1a0b2e; }
+
+        /* --- 登入彈出視窗 --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 2000; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: 0.3s; }
         .modal-overlay.active { opacity: 1; visibility: visible; }
-        .login-card { background: rgba(30,15,45,0.85); border: 1px solid rgba(212,175,55,0.3); border-radius: 20px; padding: 40px; width: 85%; max-width: 360px; text-align: center; }
+        .login-card { background: rgba(30,15,45,0.85); border: 1px solid rgba(212,175,55,0.3); border-radius: 20px; padding: 40px; width: 85%; max-width: 360px; text-align: center; position: relative; }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 1.5em; color: #888; cursor: pointer; }
+        .close-btn:hover { color: #d4af37; }
         .form-input { width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid rgba(212,175,55,0.3); border-radius: 8px; background: rgba(0,0,0,0.2); color: white; box-sizing: border-box; }
-        .btn-submit { width: 100%; padding: 14px; background: linear-gradient(135deg, #d4af37 0%, #b8901b 100%); color: #1a0b2e; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
-        
-        header { text-align: center; padding: 180px 20px 100px; background: radial-gradient(circle at center, rgba(212,175,55,0.08) 0%, rgba(0,0,0,0) 60%); }
-        h1 { color: #d4af37; font-size: 3.2em; margin-bottom: 20px; text-shadow: 0 0 15px rgba(212,175,55,0.5); }
-        .subtitle { font-size: 1.2em; color: #e0d4f5; letter-spacing: 3px; margin-bottom: 40px; }
+        .btn-submit { width: 100%; padding: 14px; background: linear-gradient(135deg, #d4af37 0%, #b8901b 100%); color: #1a0b2e; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <nav class="nav-header">
         <div class="logo-text">朵藍姆光工作室</div>
-        <button id="mainLoginBtn" class="btn-login-nav" onclick="handleMainBtnClick()">系統讀取中...</button>
+        <button id="mainLoginBtn" class="btn-login-nav" onclick="handleMainBtnClick()">登入 / 註冊</button>
     </nav>
 
     <header>
-        <h1>在宇宙頻率中找回你的內在力量</h1>
-        <div class="subtitle">天使訊息解讀 ｜ 個人能量調整 ｜ 靈性手作產品</div>
+        <h1>尋找你的專屬頻率</h1>
+        <div class="subtitle">線上預約個案 ｜ 能量產品選購</div>
     </header>
+
+    <section class="category-container">
+        <a href="shop.html?category=angel" class="category-card">
+            <span class="category-icon">👼</span>
+            <h3>天使訊息解讀</h3>
+            <p>透過高頻率連結，傳遞當下最需要的天使訊息與專屬畫作個案。</p>
+            <span class="btn-enter">查看服務</span>
+        </a>
+
+        <a href="shop.html?category=energy" class="category-card">
+            <span class="category-icon">✨</span>
+            <h3>個人能量調整</h3>
+            <p>運用光語圖騰與頻率儀器，深層清理阻礙，讓身心回歸平衡。</p>
+            <span class="btn-enter">預約調整</span>
+        </a>
+
+        <a href="shop.html?category=product" class="category-card">
+            <span class="category-icon">🌿</span>
+            <h3>靈性手作產品</h3>
+            <p>嚴選成分製作的高頻淨化噴霧、能量蠟燭與除障手工皂。</p>
+            <span class="btn-enter">選購商品</span>
+        </a>
+    </section>
 
     <div class="modal-overlay" id="loginModal">
         <div class="login-card">
-            <h2 style="color: #d4af37;">系統登入</h2>
+            <span class="close-btn" onclick="closeLoginModal()">&times;</span>
+            <h2 style="color: #d4af37; margin-top: 0;">系統登入</h2>
             <input type="text" id="accountInput" class="form-input" placeholder="請輸入帳號 (Email)">
             <input type="password" id="passwordInput" class="form-input" placeholder="請輸入密碼">
             <button class="btn-submit" onclick="loginWithAccount()">確認登入</button>
@@ -50,10 +94,74 @@
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
-    <script src="js/firebase-config.js"></script>
-    <script src="js/auth.js"></script>
+    <script>
+        // --- 彈出視窗控制 ---
+        function openLoginModal() { document.getElementById('loginModal').classList.add('active'); }
+        function closeLoginModal() { document.getElementById('loginModal').classList.remove('active'); }
+        window.onclick = function(e) { if (e.target == document.getElementById('loginModal')) closeLoginModal(); }
 
+        // --- Firebase 初始化 ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAwbENzVJ0-SWFv7DwU-I0IrIGTg1uOGKs",
+            authDomain: "duolanmu.firebaseapp.com",
+            projectId: "duolanmu",
+            storageBucket: "duolanmu.firebasestorage.app",
+            messagingSenderId: "11171522617",
+            appId: "1:11171522617:web:5d4cad219e3f903fba05e8"
+        };
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+
+        let currentUserStatus = "guest";
+        const adminUID = "zaq6RAandkQmPGFKwBdeZEWoArC2";
+
+        // --- 智慧登入感應 ---
+        firebase.auth().onAuthStateChanged((user) => {
+            const btn = document.getElementById('mainLoginBtn');
+            if (user) {
+                if (user.uid === adminUID) {
+                    currentUserStatus = "admin";
+                    btn.innerText = "⭐ 進入系統後台";
+                    btn.classList.add("btn-boss-mode");
+                } else {
+                    currentUserStatus = "member";
+                    btn.innerText = "登出會員";
+                }
+            } else {
+                currentUserStatus = "guest";
+                btn.innerText = "登入 / 註冊";
+                btn.classList.remove("btn-boss-mode");
+            }
+        });
+
+        // --- 右上角按鈕點擊事件 ---
+        function handleMainBtnClick() {
+            if (currentUserStatus === "admin") {
+                window.location.href = "admin.html"; // 管理員直接去後台
+            } else if (currentUserStatus === "member") {
+                firebase.auth().signOut().then(() => alert("已登出"));
+            } else {
+                openLoginModal();
+            }
+        }
+
+        // --- 帳密登入執行 ---
+        function loginWithAccount() {
+            const acc = document.getElementById('accountInput').value;
+            const pwd = document.getElementById('passwordInput').value;
+            if(!acc || !pwd) return alert("請輸入帳號與密碼！");
+
+            firebase.auth().signInWithEmailAndPassword(acc, pwd)
+                .then((userCredential) => {
+                    if(userCredential.user.uid === adminUID) {
+                        window.location.href = "admin.html";
+                    } else {
+                        alert("登入成功！");
+                        closeLoginModal();
+                    }
+                })
+                .catch((error) => alert("登入失敗，請檢查帳號密碼。"));
+        }
+    </script>
 </body>
 </html>
