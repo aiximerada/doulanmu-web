@@ -13,7 +13,7 @@
         
         /* --- 導覽列 --- */
         .nav-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 5%; position: absolute; top: 0; width: 90%; z-index: 1000; }
-        .logo-text { font-family: 'Noto Serif TC', serif; font-size: 1.5em; color: #d4af37; font-weight: bold; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        .logo-text { font-family: 'Noto Serif TC', serif; font-size: 1.5em; color: #d4af37; font-weight: bold; text-shadow: 0 2px 5px rgba(0,0,0,0.5); text-decoration: none; }
         .btn-login-nav { background: rgba(255, 255, 255, 0.1); color: #fce4ec; padding: 8px 24px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.3); cursor: pointer; transition: 0.3s; font-weight: bold; }
         .btn-login-nav:hover { background: rgba(255, 255, 255, 0.2); border-color: #d4af37; color: #d4af37; }
         .btn-boss-mode { background: #d4af37; color: #1a0b2e; border: none; box-shadow: 0 0 10px rgba(212,175,55,0.5); }
@@ -44,13 +44,13 @@
         .close-btn { position: absolute; top: 15px; right: 20px; font-size: 1.5em; color: #888; cursor: pointer; }
         .close-btn:hover { color: #d4af37; }
         .form-input { width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid rgba(212,175,55,0.3); border-radius: 8px; background: rgba(0,0,0,0.2); color: white; box-sizing: border-box; }
-        .btn-submit { width: 100%; padding: 14px; background: linear-gradient(135deg, #d4af37 0%, #b8901b 100%); color: #1a0b2e; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-submit { width: 100%; padding: 14px; background: linear-gradient(135deg, #d4af37 0%, #b8901b 100%); color: #1a0b2e; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
     <nav class="nav-header">
-        <div class="logo-text">朵藍姆光工作室</div>
+        <a href="index.html" class="logo-text">朵藍姆光工作室</a>
         <button id="mainLoginBtn" class="btn-login-nav" onclick="handleMainBtnClick()">登入 / 註冊</button>
     </nav>
 
@@ -94,6 +94,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <script>
         // --- 彈出視窗控制 ---
@@ -111,22 +112,35 @@
             appId: "1:11171522617:web:5d4cad219e3f903fba05e8"
         };
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const db = firebase.firestore();
 
         let currentUserStatus = "guest";
-        const adminUID = "zaq6RAandkQmPGFKwBdeZEWoArC2";
+        const superAdminUID = "zaq6RAandkQmPGFKwBdeZEWoArC2"; // 你的最高權限 UID
 
-        // --- 智慧登入感應 ---
+        // --- 🌟 智慧登入感應與【會員自動建檔】 ---
         firebase.auth().onAuthStateChanged((user) => {
             const btn = document.getElementById('mainLoginBtn');
             if (user) {
-                if (user.uid === adminUID) {
-                    currentUserStatus = "admin";
-                    btn.innerText = "⭐ 進入系統後台";
-                    btn.classList.add("btn-boss-mode");
-                } else {
-                    currentUserStatus = "member";
-                    btn.innerText = "登出會員";
-                }
+                // 自動抄寫會員資料到 Firestore (供後台管理使用)
+                db.collection("users").doc(user.uid).set({
+                    email: user.email,
+                    uid: user.uid,
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true }); // merge: true 確保如果他已有設定權限，不會被覆蓋
+
+                // 檢查權限 (最高管理員 或 資料庫中被標記為 admin)
+                db.collection("users").doc(user.uid).get().then(doc => {
+                    const data = doc.data();
+                    if (user.uid === superAdminUID || (data && data.role === "admin")) {
+                        currentUserStatus = "admin";
+                        btn.innerText = "⭐ 進入系統後台";
+                        btn.classList.add("btn-boss-mode");
+                    } else {
+                        currentUserStatus = "member";
+                        btn.innerText = "登出會員";
+                        btn.classList.remove("btn-boss-mode");
+                    }
+                });
             } else {
                 currentUserStatus = "guest";
                 btn.innerText = "登入 / 註冊";
@@ -137,7 +151,7 @@
         // --- 右上角按鈕點擊事件 ---
         function handleMainBtnClick() {
             if (currentUserStatus === "admin") {
-                window.location.href = "admin.html"; // 管理員直接去後台
+                window.location.href = "admin.html"; 
             } else if (currentUserStatus === "member") {
                 firebase.auth().signOut().then(() => alert("已登出"));
             } else {
@@ -153,12 +167,9 @@
 
             firebase.auth().signInWithEmailAndPassword(acc, pwd)
                 .then((userCredential) => {
-                    if(userCredential.user.uid === adminUID) {
-                        window.location.href = "admin.html";
-                    } else {
-                        alert("登入成功！");
-                        closeLoginModal();
-                    }
+                    // 登入成功後，onAuthStateChanged 會自動處理後續 UI 變化
+                    alert("登入成功！");
+                    closeLoginModal();
                 })
                 .catch((error) => alert("登入失敗，請檢查帳號密碼。"));
         }

@@ -37,17 +37,14 @@
         .btn-action { background: #f4f7f6; border: 1px solid #ddd; padding: 6px 12px; border-radius: 5px; cursor: pointer; color: #555; transition: 0.2s; margin-right: 5px;}
         .btn-action:hover { background: #d4af37; color: white; border-color: #d4af37; }
         
-        /* 彈出表單設計 (升級加上卷軸) */
+        /* 彈出表單設計 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(5px); }
         .modal.active { display: flex; }
         .modal-content { background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; color: #555; font-weight: bold; font-size: 0.9em; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-family: inherit; }
-        .form-group input:focus, .form-group textarea:focus { border-color: #d4af37; outline: none; box-shadow: 0 0 5px rgba(212,175,55,0.3); }
-        .modal-btns { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; position: sticky; bottom: 0; background: white; padding-top: 15px; border-top: 1px solid #eee; }
-        
-        /* 圖片預覽 */
+        .modal-btns { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
         #imagePreview { display: none; width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px; border: 2px dashed #ccc; }
     </style>
 </head>
@@ -59,6 +56,7 @@
             <div class="nav-item active" onclick="switchSection('dashboard', this)">📊 系統儀表板</div>
             <div class="nav-item" onclick="switchSection('products', this)">🌿 商品與課程管理</div>
             <div class="nav-item" onclick="switchSection('orders', this)">📦 訂單管理</div>
+            <div class="nav-item" onclick="switchSection('members', this)">👥 會員權限管理</div>
         </div>
         <div class="logout-btn" onclick="logout()">登出系統 ➔</div>
     </div>
@@ -72,7 +70,7 @@
         <div id="dashboard" class="section active">
             <div class="panel">
                 <h3>歡迎來到朵藍姆光工作室後台</h3>
-                <p>資料庫即時連線已啟動！您在這裡新增的商品會立刻出現在前台；客人下單後，訂單也會馬上顯示在「訂單管理」中。</p>
+                <p>資料庫即時連線已啟動！</p>
             </div>
         </div>
 
@@ -83,9 +81,8 @@
                     <button class="btn-add" onclick="openProductModal()">＋ 新增上架</button>
                 </div>
                 <table>
-                    <thead><tr><th>照片</th><th>名稱</th><th>標籤</th><th>重量</th><th>價格</th><th>操作</th></tr></thead>
-                    <tbody id="productsTableBody">
-                        </tbody>
+                    <thead><tr><th>照片</th><th>名稱</th><th>標籤</th><th>價格</th><th>操作</th></tr></thead>
+                    <tbody id="productsTableBody"></tbody>
                 </table>
             </div>
         </div>
@@ -95,8 +92,27 @@
                 <div class="panel-header"><h3>客戶訂單與預約紀錄</h3></div>
                 <table>
                     <thead><tr><th>客戶姓名</th><th>購買項目</th><th>總金額</th><th>聯絡方式</th><th>下單時間</th></tr></thead>
-                    <tbody id="ordersTableBody">
-                    </tbody>
+                    <tbody id="ordersTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="members" class="section">
+            <div class="panel">
+                <div class="panel-header">
+                    <h3>註冊會員列表</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>會員帳號 (Email)</th>
+                            <th>權限身分</th>
+                            <th>最後登入時間</th>
+                            <th>權限操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="membersTableBody">
+                        </tbody>
                 </table>
             </div>
         </div>
@@ -104,46 +120,12 @@
 
     <div id="productModal" class="modal">
         <div class="modal-content">
-            <h3 id="modalTitle" style="margin-top:0; color:#1a0b2e; border-bottom: 2px solid #d4af37; padding-bottom: 10px;">📦 新增商品資訊</h3>
-            
-            <div class="form-group">
-                <label>📷 商品照片 (自動壓縮節省空間)</label>
-                <input type="file" id="pPhoto" accept="image/*" onchange="compressImage(event)">
-                <img id="imagePreview" alt="預覽圖">
-            </div>
-
-            <div class="form-group">
-                <label>🏷️ 名稱</label>
-                <input type="text" id="pName" placeholder="例如：幸運能量魔法皂">
-            </div>
-
-            <div class="form-group">
-                <label>🔖 標籤</label>
-                <div style="display: flex; gap: 10px;">
-                    <select id="pTagSelect" onchange="toggleCustomTag()" style="flex: 1;">
-                        <option value="手工皂">手工皂</option>
-                        <option value="擴香石">擴香石</option>
-                        <option value="自定義">＋ 其他 (自定義)</option>
-                    </select>
-                    <input type="text" id="pTagCustom" placeholder="輸入標籤" style="display:none; flex: 1;">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>⚖️ 重量</label>
-                <input type="number" id="pWeight" placeholder="例如：100 (不需打單位，預設為克)">
-            </div>
-
-            <div class="form-group">
-                <label>💰 價格 (台幣)</label>
-                <input type="number" id="pPrice" placeholder="例如：380">
-            </div>
-
-            <div class="form-group">
-                <label>📝 商品簡介</label>
-                <textarea id="pIntro" rows="4" placeholder="向客人介紹這款產品的特色與能量..."></textarea>
-            </div>
-
+            <h3 style="margin-top:0; color:#1a0b2e; border-bottom: 2px solid #d4af37; padding-bottom: 10px;">📦 新增商品資訊</h3>
+            <div class="form-group"><label>📷 商品照片</label><input type="file" id="pPhoto" accept="image/*" onchange="compressImage(event)"><img id="imagePreview"></div>
+            <div class="form-group"><label>🏷️ 名稱</label><input type="text" id="pName"></div>
+            <div class="form-group"><label>🔖 標籤</label><select id="pTagSelect"><option value="手工皂">手工皂</option><option value="擴香石">擴香石</option></select></div>
+            <div class="form-group"><label>💰 價格</label><input type="number" id="pPrice"></div>
+            <div class="form-group"><label>📝 簡介</label><textarea id="pIntro" rows="3"></textarea></div>
             <div class="modal-btns">
                 <button class="btn-action" onclick="closeProductModal()">取消</button>
                 <button class="btn-add" onclick="saveProduct()">確認上架</button>
@@ -152,7 +134,6 @@
     </div>
 
     <script>
-        // 1. Firebase 初始化
         const firebaseConfig = {
             apiKey: "AIzaSyAwbENzVJ0-SWFv7DwU-I0IrIGTg1uOGKs",
             authDomain: "duolanmu.firebaseapp.com",
@@ -164,187 +145,13 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.firestore();
 
-        // 用來暫存壓縮後的圖片代碼
         let currentCompressedImage = "";
+        const superAdminUID = "zaq6RAandkQmPGFKwBdeZEWoArC2"; // 你的最高權限 UID
 
-        // 安全守衛
         firebase.auth().onAuthStateChanged((user) => {
-            if (!user || user.uid !== "zaq6RAandkQmPGFKwBdeZEWoArC2") {
+            if (!user) {
                 window.location.href = "index.html";
             } else {
-                listenToProducts();
-                listenToOrders();
-            }
-        });
-
-        // --- 介面控制邏輯 ---
-        function switchSection(sectionId, element) {
-            document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            document.getElementById(sectionId).classList.add('active');
-            element.classList.add('active');
-            document.getElementById('pageTitle').innerText = element.innerText.replace(/[^\u4e00-\u9fa5A-Za-z0-9 ]/g, '');
-        }
-
-        function openProductModal() { 
-            document.getElementById('productModal').classList.add('active'); 
-        }
-
-        function closeProductModal() { 
-            document.getElementById('productModal').classList.remove('active'); 
-            // 清空表單
-            document.getElementById('pPhoto').value = "";
-            document.getElementById('imagePreview').style.display = "none";
-            document.getElementById('pName').value = "";
-            document.getElementById('pWeight').value = "";
-            document.getElementById('pPrice').value = "";
-            document.getElementById('pIntro').value = "";
-            document.getElementById('pTagSelect').value = "手工皂";
-            toggleCustomTag();
-            currentCompressedImage = "";
-        }
-
-        function toggleCustomTag() {
-            const select = document.getElementById('pTagSelect');
-            const customInput = document.getElementById('pTagCustom');
-            if (select.value === "自定義") {
-                customInput.style.display = "block";
-                customInput.focus();
-            } else {
-                customInput.style.display = "none";
-            }
-        }
-
-        function logout() { firebase.auth().signOut().then(() => { window.location.href = "index.html"; }); }
-
-        // --- 🌟 圖片自動壓縮引擎 (HTML5 Canvas) ---
-        function compressImage(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = function(e) {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const MAX_SIZE = 800; // 限制最大寬度為 800px 節省空間
-                    let width = img.width;
-                    let height = img.height;
-
-                    // 依比例縮小
-                    if (width > height) {
-                        if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
-                    } else {
-                        if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
-                    }
-
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-
-                    // 壓製成輕量級 Base64 (JPEG格式，品質 0.7)
-                    currentCompressedImage = canvas.toDataURL('image/jpeg', 0.7);
-                    
-                    // 顯示預覽圖
-                    const preview = document.getElementById('imagePreview');
-                    preview.src = currentCompressedImage;
-                    preview.style.display = 'block';
-                }
-            }
-        }
-
-        // --- 寫入商品到資料庫 ---
-        function saveProduct() {
-            const name = document.getElementById('pName').value;
-            const price = document.getElementById('pPrice').value;
-            const weight = document.getElementById('pWeight').value;
-            const intro = document.getElementById('pIntro').value;
-            
-            // 判斷標籤是下拉還是自定義
-            let tag = document.getElementById('pTagSelect').value;
-            if(tag === "自定義") {
-                tag = document.getElementById('pTagCustom').value;
-            }
-
-            if(!name || !price || !tag) return alert("名稱、價格與標籤為必填項目！");
-
-            // 存入 Firebase (包含新屬性)
-            db.collection("products").add({
-                photoBase64: currentCompressedImage, // 存入壓縮後的照片
-                name: name,
-                tag: tag,
-                weight: weight ? Number(weight) : 0,
-                price: Number(price),
-                intro: intro,
-                category: "product", // 預設為主分類
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-                alert("✅ 上架成功！");
-                closeProductModal();
-            }).catch(error => alert("上架失敗：" + error.message));
-        }
-
-        // --- 即時監聽：讀取商品列表 ---
-        function listenToProducts() {
-            db.collection("products").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
-                const tbody = document.getElementById("productsTableBody");
-                tbody.innerHTML = ""; 
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    
-                    // 照片處理：如果有照片就顯示縮圖，沒有就顯示文字
-                    const photoHtml = data.photoBase64 
-                        ? `<img src="${data.photoBase64}" style="width:50px; height:50px; object-fit:cover; border-radius:8px; border:1px solid #ddd;">`
-                        : `<span style="color:#aaa; font-size:0.8em;">無圖</span>`;
-                    
-                    const weightText = data.weight ? `${data.weight}g` : '-';
-
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${photoHtml}</td>
-                            <td><strong>${data.name}</strong></td>
-                            <td><span class="status-badge">${data.tag || '無'}</span></td>
-                            <td>${weightText}</td>
-                            <td><strong style="color:#1a0b2e;">$${data.price}</strong></td>
-                            <td><button class="btn-action" style="color:#e74c3c; border-color:#e74c3c;" onclick="deleteProduct('${doc.id}')">下架刪除</button></td>
-                        </tr>
-                    `;
-                });
-            });
-        }
-
-        function deleteProduct(docId) {
-            if(confirm("確定要將這個商品下架刪除嗎？")) {
-                db.collection("products").doc(docId).delete();
-            }
-        }
-
-        function listenToOrders() {
-            db.collection("orders").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
-                const tbody = document.getElementById("ordersTableBody");
-                tbody.innerHTML = "";
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    let timeString = "剛剛";
-                    if(data.createdAt) {
-                        let date = data.createdAt.toDate();
-                        timeString = date.toLocaleDateString() + " " + date.toLocaleTimeString();
-                    }
-                    tbody.innerHTML += `
-                        <tr>
-                            <td><strong>${data.customerName}</strong></td>
-                            <td>${data.itemName}</td>
-                            <td><span class="status-badge">$${data.price}</span></td>
-                            <td>${data.contactInfo}</td>
-                            <td style="font-size: 0.85em; color: #888;">${timeString}</td>
-                        </tr>
-                    `;
-                });
-            });
-        }
-    </script>
-</body>
-</html>
+                // 檢查是否有管理員權限 (透過 UID 或資料庫角色)
+                db.collection("users").doc(user.uid).get().then(doc => {
+                    const data =
