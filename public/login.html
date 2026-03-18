@@ -99,12 +99,10 @@
         const db = firebase.firestore();
         const superAdminUID = "zaq6RAandkQmPGFKwBdeZEWoArC2"; 
 
-        // --- 🌟 處理成功登入後的建檔與跳轉 ---
         function handleSuccessfulLogin(user) {
             const btn = document.getElementById('mainBtn');
             if(btn) btn.innerText = "驗證宇宙頻率中...";
             
-            // 將用戶寫入資料庫，並給予 "member" 權限
             db.collection("users").doc(user.uid).set({
                 email: user.email || "LINE 登入無信箱",
                 uid: user.uid,
@@ -118,9 +116,8 @@
             });
         }
 
-        // --- 🔥 啟動 LINE 登入 ---
+        // --- 🔥 啟動 LINE 登入 (已精準鑲嵌網址) ---
         function loginWithLine() {
-            // 直接跳轉到我們剛剛架好的後端大腦
             window.location.href = "https://us-central1-duolanmu.cloudfunctions.net/lineLogin";
         }
 
@@ -130,18 +127,16 @@
             const token = urlParams.get('token');
 
             if (token) {
-                // 如果網址有 token，代表他是剛從 LINE 授權回來的客人
                 const btn = document.getElementById('mainBtn');
                 if(btn) btn.innerText = "LINE 驗證中...";
 
-                // 用這個 Token 跟 Firebase 換取登入身分
                 firebase.auth().signInWithCustomToken(token)
                     .then((userCredential) => {
                         handleSuccessfulLogin(userCredential.user);
                     })
                     .catch((error) => {
                         alert("LINE 登入發生錯誤，請稍後再試。");
-                        window.history.replaceState({}, document.title, "/login.html"); // 把網址清乾淨
+                        window.history.replaceState({}, document.title, "/login.html");
                         if(btn) btn.innerText = "進入系統";
                     });
             }
