@@ -1,27 +1,33 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 admin.initializeApp();
+const db = admin.firestore();
 
-// 你的 LINE 專屬鑰匙
+// ==========================================
+// 🔑 第一區：金鑰與基本設定 (已全部解鎖配置完畢！)
+// ==========================================
 const LINE_CHANNEL_ID = "2009522496";
 const LINE_CHANNEL_SECRET = "06f8a9ae273517d78f845975ebe8eb62";
-
-// ⚠️ 這裡要填寫你部署後的網址 (我們等一下會拿到)
-// 預設通常長這樣，請先把 duolanmu 換成你的 Firebase 專案 ID
 const CALLBACK_URL = "https://us-central1-duolanmu.cloudfunctions.net/lineCallback";
 
+// Messaging API Token
+const LINE_ACCESS_TOKEN = "p6ugh27GDssmbdkmySR4Z/6QykwBCwpxyQzRvpjJqJAR8zGbTUH0MbhlsMYKAZFrcEWozoAXRflXW+z5P0+EWNPPgVXfjkeYAcFrRleCM3Spwdjsy43Af2S3yNwEoY+G8Us2LtzKXcMpjVQ8DnOovAdB04t89/1O/w1cDnyilFU="; 
+// 店長專屬 User ID
+const ADMIN_LINE_ID = "U438eb7cb22b7077937c59815811eee40"; 
+
+// ==========================================
+// 🌐 第二區：LINE 登入與會員綁定系統
+// ==========================================
 exports.lineLogin = functions.https.onRequest((req, res) => {
-    // 1. 引導客人去 LINE 的授權畫面
     const url = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${LINE_CHANNEL_ID}&redirect_uri=${encodeURIComponent(CALLBACK_URL)}&state=12345abcde&scope=profile%20openid%20email`;
     res.redirect(url);
 });
 
 exports.lineCallback = functions.https.onRequest(async (req, res) => {
     const code = req.query.code;
-    if (!code) return res.status(400).send("授權失敗，沒有取得代碼");
+    if (!code) return res.status(400).send("授權失敗");
 
     try {
-        // 2. 拿著客人的代碼，去跟 LINE 換取 Token
         const tokenParams = new URLSearchParams();
         tokenParams.append('grant_type', 'authorization_code');
         tokenParams.append('code', code);
@@ -29,41 +35,216 @@ exports.lineCallback = functions.https.onRequest(async (req, res) => {
         tokenParams.append('client_id', LINE_CHANNEL_ID);
         tokenParams.append('client_secret', LINE_CHANNEL_SECRET);
 
-        const tokenRes = await fetch('https://api.line.me/oauth2/v2.1/token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: tokenParams
-        });
+        const tokenRes = await fetch('https://api.line.me/oauth2/v2.1/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: tokenParams });
         const tokenData = await tokenRes.json();
 
-        // 3. 拿 Token 去跟 LINE 要客人的大頭貼跟名字
-        const profileRes = await fetch('https://api.line.me/v2/profile', {
-            headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
-        });
+        const profileRes = await fetch('https://api.line.me/v2/profile', { headers: { 'Authorization': `Bearer ${tokenData.access_token}` } });
         const profile = await profileRes.json();
 
-        // 4. 在 Firebase 建立這個客人的專屬檔案
         const firebaseUid = `line:${profile.userId}`;
         try {
             await admin.auth().getUser(firebaseUid);
         } catch (error) {
             if (error.code === 'auth/user-not-found') {
-                await admin.auth().createUser({
-                    uid: firebaseUid,
-                    displayName: profile.displayName,
-                    photoURL: profile.pictureUrl,
-                });
+                await admin.auth().createUser({ uid: firebaseUid, displayName: profile.displayName, photoURL: profile.pictureUrl });
             }
         }
-
-        // 5. 產生 Firebase 專屬通行證 (Custom Token)
         const customToken = await admin.auth().createCustomToken(firebaseUid);
-
-        // 6. 把通行證帶回你的登入網頁 (請確認你的網址是不是 duolanmu.com)
         res.redirect(`https://duolanmu.com/login.html?token=${customToken}`);
-
     } catch (error) {
-        console.error(error);
-        res.status(500).send("LINE 登入處理發生錯誤，請聯絡店長。");
+        console.error(error); res.status(500).send("登入發生錯誤");
     }
 });
+
+// ==========================================
+// 🤖 第三區：LINE 智慧客服機器人 (Webhook)
+// ==========================================
+exports.lineWebhook = functions.https.onRequest(async (req, res) => {
+    if (req.method !== "POST") return res.status(200).send("OK");
+    const events = req.body.events;
+    
+    for (let event of events) {
+        if (event.type === 'message' && event.message.type === 'text') {
+            const text = event.message.text;
+            const userId = event.source.userId;
+            const replyToken = event.replyToken;
+
+            // 🧠 智慧關鍵字辨識
+            if (/(訂單|進度|查詢|物流|出貨|買了什麼)/.test(text)) {
+                await handleOrderQuery(userId, replyToken);
+            } else if (/(商品|買|推薦|商城|購物|手作|皂|能量|天使)/.test(text)) {
+                await handleProductQuery(replyToken);
+            } else {
+                // 無法辨識時，給予「智慧引導按鈕卡片」
+                await replyLineMessage(replyToken, fallbackCard());
+            }
+        }
+    }
+    res.status(200).send("OK");
+});
+
+// 處理「查詢訂單」邏輯
+async function handleOrderQuery(userId, replyToken) {
+    try {
+        const userDoc = await db.collection("users").doc(`line:${userId}`).get();
+        if (!userDoc.exists || !userDoc.data().name) {
+            return await replyLineMessage(replyToken, simpleTextCard("⚠️ 尚未綁定姓名", "請先至官網「設定」中填寫您的真實姓名，系統才能為您找回專屬訂單喔！", "前往設定", "https://duolanmu.com/admin.html"));
+        }
+        
+        const userName = userDoc.data().name;
+        const ordersSnap = await db.collection("orders").where("customerName", "==", userName).get();
+        
+        if (ordersSnap.empty) {
+            return await replyLineMessage(replyToken, simpleTextCard("查無訂單", `目前沒有查到屬於「${userName}」的訂單喔！快去商城逛逛吧 ✨`, "前往商城", "https://duolanmu.com/shop.html"));
+        }
+
+        let orders = [];
+        ordersSnap.forEach(doc => orders.push(doc.data()));
+        orders.sort((a,b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+        const latestOrder = orders[0]; 
+        
+        await replyLineMessage(replyToken, orderStatusCard(latestOrder, "📦 您的最新訂單狀態"));
+    } catch (e) {
+        await replyLineMessage(replyToken, simpleTextCard("查詢錯誤", "宇宙頻率暫時受到干擾，請稍後再試。"));
+    }
+}
+
+// 處理「查詢商品」邏輯
+async function handleProductQuery(replyToken) {
+    try {
+        const productsSnap = await db.collection("products").orderBy("createdAt", "desc").limit(5).get();
+        if (productsSnap.empty) {
+            return await replyLineMessage(replyToken, simpleTextCard("準備中", "店長正在為您準備高頻能量好物，請稍後再來逛逛喔 ✨", "前往商城", "https://duolanmu.com/shop.html"));
+        }
+        
+        let carouselBubbles = [];
+        productsSnap.forEach(doc => {
+            const p = doc.data();
+            carouselBubbles.push(productBubble(p));
+        });
+        
+        const flexMsg = {
+            type: "flex", altText: "✨ 最新熱賣能量商品",
+            contents: { type: "carousel", contents: carouselBubbles }
+        };
+        await replyLineMessage(replyToken, [flexMsg]);
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+// ==========================================
+// 📤 第四區：訂單自動推播系統 (Firestore Trigger)
+// ==========================================
+exports.notifyNewOrder = functions.firestore.document('orders/{orderId}').onCreate(async (snap, context) => {
+    const order = snap.data();
+
+    // 1. 發送精美卡片給【店長/管理員】
+    if (ADMIN_LINE_ID) {
+        await pushLineMessage(ADMIN_LINE_ID, orderStatusCard(order, "🔔 新訂單通知 (店長專屬)"));
+    }
+
+    // 2. 發送精美卡片給【下單的客人】
+    try {
+        const usersSnap = await db.collection('users').where('name', '==', order.customerName).get();
+        if (!usersSnap.empty) {
+            const userDoc = usersSnap.docs[0];
+            const uid = userDoc.id; 
+            if (uid.startsWith('line:')) {
+                const customerLineId = uid.replace('line:', '');
+                await pushLineMessage(customerLineId, orderStatusCard(order, "🎉 訂單成立通知"));
+            }
+        }
+    } catch (e) { console.error("通知客人失敗", e); }
+});
+
+// ==========================================
+// 🎨 第五區：LINE 訊息發送與卡片設計庫
+// ==========================================
+
+async function replyLineMessage(replyToken, messages) {
+    await fetch('https://api.line.me/v2/bot/message/reply', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${LINE_ACCESS_TOKEN}` },
+        body: JSON.stringify({ replyToken: replyToken, messages: Array.isArray(messages) ? messages : [messages] })
+    });
+}
+
+async function pushLineMessage(userId, messages) {
+    await fetch('https://api.line.me/v2/bot/message/push', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${LINE_ACCESS_TOKEN}` },
+        body: JSON.stringify({ to: userId, messages: Array.isArray(messages) ? messages : [messages] })
+    });
+}
+
+function orderStatusCard(order, titleText) {
+    return {
+        type: "flex", altText: titleText,
+        contents: {
+            type: "bubble",
+            header: { type: "box", layout: "vertical", backgroundColor: "#1a0b2e", contents: [
+                { type: "text", text: titleText, weight: "bold", color: "#d4af37", size: "md" }
+            ]},
+            body: { type: "box", layout: "vertical", spacing: "md", contents: [
+                { type: "box", layout: "horizontal", contents: [ { type: "text", text: "訂購人", color: "#888888", size: "sm", flex: 2 }, { type: "text", text: order.customerName, color: "#111111", size: "sm", flex: 5, wrap: true } ] },
+                { type: "box", layout: "horizontal", contents: [ { type: "text", text: "目前狀態", color: "#888888", size: "sm", flex: 2 }, { type: "text", text: order.status, color: "#e74c3c", weight: "bold", size: "sm", flex: 5 } ] },
+                { type: "box", layout: "horizontal", contents: [ { type: "text", text: "商品明細", color: "#888888", size: "sm", flex: 2 }, { type: "text", text: order.itemName, color: "#111111", size: "sm", flex: 5, wrap: true } ] },
+                { type: "separator", margin: "md", color: "#d4af37" },
+                { type: "box", layout: "horizontal", margin: "md", contents: [ { type: "text", text: "總計金額", color: "#888888", size: "sm", flex: 2 }, { type: "text", text: `NT$ ${order.price}`, color: "#d4af37", weight: "bold", size: "md", flex: 5 } ] }
+            ]},
+            footer: { type: "box", layout: "vertical", contents: [
+                { type: "button", style: "primary", color: "#d4af37", action: { type: "uri", label: "查看訂單詳情", uri: "https://duolanmu.com/admin.html" } }
+            ]}
+        }
+    };
+}
+
+function productBubble(p) {
+    const imgUrl = p.photoBase64 && p.photoBase64.startsWith('http') ? p.photoBase64 : "https://via.placeholder.com/300x300/1a0b2e/d4af37?text=DouLanMu";
+    return {
+        type: "bubble", size: "micro",
+        hero: { type: "image", url: imgUrl, size: "full", aspectRatio: "1:1", aspectMode: "cover" },
+        body: { type: "box", layout: "vertical", paddingAll: "15px", contents: [
+            { type: "text", text: p.name, weight: "bold", size: "md", wrap: true },
+            { type: "text", text: `NT$ ${p.price}`, color: "#d4af37", weight: "bold", size: "sm", margin: "md" }
+        ]},
+        footer: { type: "box", layout: "vertical", spacing: "sm", contents: [
+            { type: "button", style: "primary", color: "#1a0b2e", action: { type: "uri", label: "前往選購", uri: `https://duolanmu.com/shop.html?category=${p.category || 'product'}` } }
+        ]}
+    };
+}
+
+function fallbackCard() {
+    return {
+        type: "flex", altText: "朵藍姆光商城 - 服務選單",
+        contents: {
+            type: "bubble",
+            header: { type: "box", layout: "vertical", backgroundColor: "#0f051a", contents: [
+                { type: "text", text: "朵藍姆光工作室", weight: "bold", color: "#d4af37", align: "center" }
+            ]},
+            body: { type: "box", layout: "vertical", contents: [
+                { type: "text", text: "您好！目前我還在學習您的宇宙語 💫\n請問您需要什麼協助呢？", wrap: true, color: "#666666", size: "sm", align: "center" }
+            ]},
+            footer: { type: "box", layout: "vertical", spacing: "sm", contents: [
+                { type: "button", style: "primary", color: "#d4af37", action: { type: "message", label: "📦 查詢我的訂單", text: "我想查詢訂單進度" } },
+                { type: "button", style: "primary", color: "#d4af37", action: { type: "message", label: "🌿 熱賣商品推薦", text: "有什麼推薦的商品嗎？" } },
+                { type: "button", style: "secondary", action: { type: "uri", label: "✨ 前往官方商城", uri: "https://duolanmu.com" } }
+            ]}
+        }
+    };
+}
+
+function simpleTextCard(title, text, btnLabel, btnUri) {
+    return {
+        type: "flex", altText: title,
+        contents: {
+            type: "bubble",
+            body: { type: "box", layout: "vertical", spacing: "md", contents: [
+                { type: "text", text: title, weight: "bold", color: "#d4af37", size: "lg" },
+                { type: "text", text: text, wrap: true, color: "#666666", size: "sm" }
+            ]},
+            footer: { type: "box", layout: "vertical", contents: [
+                { type: "button", style: "primary", color: "#1a0b2e", action: { type: "uri", label: btnLabel, uri: btnUri } }
+            ]}
+        }
+    };
+}
