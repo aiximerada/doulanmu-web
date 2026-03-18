@@ -2,134 +2,147 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>朵藍姆光工作室 | 系統管理後台</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>朵藍姆管理中心</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f051a">
+    
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=PingFang+TC:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <style>
-        body { margin: 0; font-family: 'PingFang TC', sans-serif; background: #f4f7f6; display: flex; height: 100vh; overflow: hidden; }
-        .sidebar { width: 260px; background: #1a0b2e; color: #fce4ec; display: flex; flex-direction: column; box-shadow: 4px 0 15px rgba(0,0,0,0.1); z-index: 10; }
-        .sidebar-brand { padding: 30px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; }
-        .sidebar-brand h2 { font-family: 'Noto Serif TC', serif; color: #d4af37; margin: 0; font-size: 1.5em; letter-spacing: 2px; }
-        .nav-menu { flex: 1; display: flex; flex-direction: column; gap: 5px; padding: 0 15px; }
-        .nav-item { padding: 15px 20px; border-radius: 10px; color: #c4b5d6; cursor: pointer; transition: 0.3s; font-size: 1.05em; display: flex; align-items: center; gap: 10px; }
-        .nav-item:hover, .nav-item.active { background: rgba(212,175,55,0.15); color: #d4af37; font-weight: bold; }
-        .logout-btn { margin: 15px; padding: 15px; background: rgba(192, 57, 43, 0.8); color: white; border-radius: 10px; text-align: center; cursor: pointer; transition: 0.3s; font-weight: bold; }
-        .logout-btn:hover { background: #e74c3c; }
-        .main-content { flex: 1; overflow-y: auto; padding: 40px; position: relative; }
-        .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .top-header h2 { margin: 0; color: #1a0b2e; font-size: 1.8em; }
-        .admin-badge { background: #d4af37; color: #1a0b2e; padding: 8px 20px; border-radius: 30px; font-weight: bold; box-shadow: 0 4px 10px rgba(212,175,55,0.3); }
-        .section { display: none; animation: fadeIn 0.4s ease; }
-        .section.active { display: block; }
+        :root { --gold: #d4af37; --bg: #0f051a; --card-bg: rgba(255,255,255,0.05); --text: #fce4ec; --text-muted: #c4b5d6; }
+        body { margin: 0; font-family: 'PingFang TC', sans-serif; background: linear-gradient(135deg, #0f051a 0%, #2a1147 50%, #1a0b2e 100%); color: var(--text); -webkit-tap-highlight-color: transparent; padding-bottom: 70px; min-height: 100vh; }
+
+        /* --- 頂部 Header --- */
+        .app-header { background: rgba(0,0,0,0.4); backdrop-filter: blur(10px); color: var(--gold); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .app-header h1 { font-size: 1.2em; margin: 0; font-family: 'Noto Serif TC'; letter-spacing: 1px; text-shadow: 0 0 10px rgba(212,175,55,0.3); }
+        .btn-logout { background: rgba(255,255,255,0.1); color: var(--text); border: 1px solid rgba(255,255,255,0.2); padding: 6px 15px; border-radius: 20px; font-size: 0.8em; cursor: pointer; }
+
+        /* --- 底部導覽列 --- */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(15, 5, 26, 0.95); backdrop-filter: blur(15px); border-top: 1px solid rgba(212,175,55,0.2); display: flex; justify-content: space-around; padding: 10px 0; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: #666; font-size: 0.8em; cursor: pointer; transition: 0.3s; flex: 1; }
+        .nav-item.active { color: var(--gold); font-weight: bold; text-shadow: 0 0 10px rgba(212,175,55,0.5); }
+        .nav-icon { font-size: 1.5em; margin-bottom: 3px; }
+
+        /* --- 懸浮新增按鈕 (FAB) --- */
+        .fab { position: fixed; bottom: 85px; right: 20px; width: 55px; height: 55px; background: linear-gradient(135deg, #d4af37 0%, #b8901b 100%); color: #1a0b2e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2em; box-shadow: 0 4px 15px rgba(212,175,55,0.5); z-index: 999; border: none; cursor: pointer; }
+
+        /* --- 內容區域 --- */
+        .tab-content { display: none; padding: 15px; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .panel { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); margin-bottom: 30px; }
-        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #f4f7f6; padding-bottom: 15px; }
-        .btn-add { background: #1a0b2e; color: #d4af37; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-add:hover { background: #d4af37; color: #1a0b2e; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; vertical-align: middle; }
-        th { color: #888; font-weight: normal; font-size: 0.9em; }
-        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.85em; font-weight: bold; background: #e8f8f5; color: #1abc9c; border: 1px solid #1abc9c; }
-        .btn-action { background: #f4f7f6; border: 1px solid #ddd; padding: 6px 12px; border-radius: 5px; cursor: pointer; color: #555; transition: 0.2s; margin-right: 5px;}
-        .btn-action:hover { background: #d4af37; color: white; border-color: #d4af37; }
         
-        /* 彈出表單設計 */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(5px); }
+        h3 { color: var(--gold); font-family: 'Noto Serif TC', serif; margin-top: 5px; }
+
+        /* 儀表板數據卡片 */
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .data-card { background: var(--card-bg); border: 1px solid rgba(212,175,55,0.2); padding: 20px; border-radius: 15px; backdrop-filter: blur(10px); text-align: center; }
+        .data-card h4 { margin: 0; font-size: 0.85em; color: var(--text-muted); }
+        .data-card .value { font-size: 1.6em; font-weight: bold; color: white; margin-top: 5px; }
+
+        /* 列表卡片 */
+        .list-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 15px; margin-bottom: 15px; backdrop-filter: blur(10px); display: flex; flex-direction: column; gap: 10px; }
+        .list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        .list-body { display: flex; gap: 15px; align-items: center; }
+        .item-img { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
+        
+        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75em; font-weight: bold; border: 1px solid transparent; }
+        .status-pending { background: rgba(230, 81, 0, 0.2); color: #ffb74d; border-color: rgba(255, 183, 77, 0.5); }
+        .status-done { background: rgba(46, 125, 50, 0.2); color: #81c784; border-color: rgba(129, 199, 132, 0.5); }
+
+        .btn-small { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 6px; font-size: 0.85em; cursor: pointer; color: white; }
+        .btn-primary { background: var(--gold); color: #1a0b2e; border: none; font-weight: bold; }
+        .btn-danger { color: #ff8a80; background: rgba(255, 138, 128, 0.1); border-color: rgba(255, 138, 128, 0.3); }
+
+        /* --- 彈出表單 --- */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 2000; align-items: flex-end; }
         .modal.active { display: flex; }
-        .modal-content { background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .modal-content { background: #1a0b2e; border: 1px solid var(--gold); width: 100%; border-radius: 20px 20px 0 0; padding: 25px 20px 40px; box-sizing: border-box; max-height: 85vh; overflow-y: auto; }
         .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; color: #555; font-weight: bold; font-size: 0.9em; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-family: inherit; }
-        .modal-btns { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
-        #imagePreview { display: none; width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px; border: 2px dashed #ccc; }
+        .form-group label { display: block; font-size: 0.85em; color: var(--text-muted); margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid rgba(212,175,55,0.3); border-radius: 10px; background: rgba(0,0,0,0.5); color: white; box-sizing: border-box; font-size: 1em; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 10px rgba(212,175,55,0.2); }
+        .btn-submit { width: 100%; background: linear-gradient(135deg, #d4af37 0%, #b8901b 100%); color: #1a0b2e; border: none; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 1.1em; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
-        <div class="sidebar-brand"><h2>朵藍姆光工作室</h2><p>系統管理後台</p></div>
-        <div class="nav-menu">
-            <div class="nav-item active" onclick="switchSection('dashboard', this)">📊 系統儀表板</div>
-            <div class="nav-item" onclick="switchSection('products', this)">🌿 商品與課程管理</div>
-            <div class="nav-item" onclick="switchSection('orders', this)">📦 訂單管理</div>
-            <div class="nav-item" onclick="switchSection('members', this)">👥 會員權限管理</div>
-        </div>
-        <div class="logout-btn" onclick="logout()">登出系統 ➔</div>
+    <div class="app-header">
+        <h1>朵藍姆管理中心</h1>
+        <button class="btn-logout" onclick="logout()">登出</button>
     </div>
 
-    <div class="main-content">
-        <div class="top-header">
-            <h2 id="pageTitle">系統儀表板</h2>
-            <div class="admin-badge">⭐ 系統管理員</div>
-        </div>
-
-        <div id="dashboard" class="section active">
-            <div class="panel">
-                <h3>歡迎來到朵藍姆光工作室後台</h3>
-                <p>資料庫即時連線已啟動！</p>
-            </div>
-        </div>
-
-        <div id="products" class="section">
-            <div class="panel">
-                <div class="panel-header">
-                    <h3>上架商品/課程列表</h3>
-                    <button class="btn-add" onclick="openProductModal()">＋ 新增上架</button>
-                </div>
-                <table>
-                    <thead><tr><th>照片</th><th>名稱</th><th>標籤</th><th>價格</th><th>操作</th></tr></thead>
-                    <tbody id="productsTableBody"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="orders" class="section">
-            <div class="panel">
-                <div class="panel-header"><h3>客戶訂單與預約紀錄</h3></div>
-                <table>
-                    <thead><tr><th>客戶姓名</th><th>購買項目</th><th>總金額</th><th>聯絡方式</th><th>下單時間</th></tr></thead>
-                    <tbody id="ordersTableBody"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="members" class="section">
-            <div class="panel">
-                <div class="panel-header">
-                    <h3>註冊會員列表</h3>
-                </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>會員帳號 (Email)</th>
-                            <th>權限身分</th>
-                            <th>最後登入時間</th>
-                            <th>權限操作</th>
-                        </tr>
-                    </thead>
-                    <tbody id="membersTableBody">
-                        </tbody>
-                </table>
-            </div>
+    <div id="dashboard" class="tab-content active">
+        <h3>營運總覽</h3>
+        <div class="dashboard-grid">
+            <div class="data-card"><h4>待處理訂單</h4><div class="value" id="statPending" style="color:#ffb74d;">0</div></div>
+            <div class="data-card"><h4>總營業額</h4><div class="value" id="statRevenue" style="color:var(--gold);">0</div></div>
+            <div class="data-card"><h4>上架商品</h4><div class="value" id="statProducts">0</div></div>
+            <div class="data-card"><h4>會員人數</h4><div class="value" id="statMembers">0</div></div>
         </div>
     </div>
 
-    <div id="productModal" class="modal">
+    <div id="products" class="tab-content">
+        <h3>我的商品</h3>
+        <div id="productListArea"></div>
+    </div>
+
+    <div id="orders" class="tab-content">
+        <h3>訂單列表</h3>
+        <div id="orderListArea"></div>
+    </div>
+
+    <div id="members" class="tab-content">
+        <h3>會員權限</h3>
+        <div id="memberListArea"></div>
+    </div>
+
+    <button class="fab" onclick="openProductModal()">+</button>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('dashboard', this)">
+            <div class="nav-icon">📊</div><div>首頁</div>
+        </div>
+        <div class="nav-item" onclick="switchTab('orders', this)">
+            <div class="nav-icon">📦</div><div>訂單</div>
+        </div>
+        <div class="nav-item" onclick="switchTab('products', this)">
+            <div class="nav-icon">🌿</div><div>商品</div>
+        </div>
+        <div class="nav-item" onclick="switchTab('members', this)">
+            <div class="nav-icon">👥</div><div>會員</div>
+        </div>
+    </div>
+
+    <div id="productModal" class="modal" onclick="if(event.target==this) closeProductModal()">
         <div class="modal-content">
-            <h3 style="margin-top:0; color:#1a0b2e; border-bottom: 2px solid #d4af37; padding-bottom: 10px;">📦 新增商品資訊</h3>
-            <div class="form-group"><label>📷 商品照片</label><input type="file" id="pPhoto" accept="image/*" onchange="compressImage(event)"><img id="imagePreview"></div>
-            <div class="form-group"><label>🏷️ 名稱</label><input type="text" id="pName"></div>
-            <div class="form-group"><label>🔖 標籤</label><select id="pTagSelect"><option value="手工皂">手工皂</option><option value="擴香石">擴香石</option></select></div>
-            <div class="form-group"><label>💰 價格</label><input type="number" id="pPrice"></div>
-            <div class="form-group"><label>📝 簡介</label><textarea id="pIntro" rows="3"></textarea></div>
-            <div class="modal-btns">
-                <button class="btn-action" onclick="closeProductModal()">取消</button>
-                <button class="btn-add" onclick="saveProduct()">確認上架</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h3 style="margin:0;">新增能量商品</h3>
+                <span onclick="closeProductModal()" style="font-size:1.5em; color:#888;">&times;</span>
             </div>
+            
+            <div class="form-group">
+                <label>📷 照片上傳</label>
+                <input type="file" id="pPhoto" accept="image/*" onchange="compressImage(event)">
+                <img id="imagePreview" style="display:none; width:80px; height:80px; object-fit:cover; border-radius:10px; margin-top:10px; border: 1px solid #d4af37;">
+            </div>
+            <div class="form-group"><label>🏷️ 名稱</label><input type="text" id="pName" placeholder="例如：幸運魔法皂"></div>
+            <div class="form-group"><label>💰 價格</label><input type="number" id="pPrice" placeholder="輸入數字"></div>
+            <div class="form-group">
+                <label>📁 分類</label>
+                <select id="pCategory">
+                    <option value="product">靈性手作產品</option>
+                    <option value="angel">天使訊息解讀</option>
+                    <option value="energy">個人能量調整</option>
+                </select>
+            </div>
+            <button class="btn-submit" onclick="saveProduct()">確認上架</button>
         </div>
     </div>
 
@@ -145,13 +158,166 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.firestore();
 
+        const superAdminUID = "zaq6RAandkQmPGFKwBdeZEWoArC2"; 
         let currentCompressedImage = "";
-        const superAdminUID = "zaq6RAandkQmPGFKwBdeZEWoArC2"; // 你的最高權限 UID
 
         firebase.auth().onAuthStateChanged((user) => {
             if (!user) {
                 window.location.href = "index.html";
             } else {
-                // 檢查是否有管理員權限 (透過 UID 或資料庫角色)
                 db.collection("users").doc(user.uid).get().then(doc => {
-                    const data =
+                    const data = doc.data();
+                    if (user.uid === superAdminUID || (data && data.role === "admin")) {
+                        loadData(); 
+                    } else {
+                        alert("權限不足！");
+                        window.location.href = "index.html";
+                    }
+                });
+            }
+        });
+
+        function switchTab(tabId, el) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            el.classList.add('active');
+            document.querySelector('.fab').style.display = (tabId === 'products') ? 'flex' : 'none';
+        }
+
+        function openProductModal() { document.getElementById('productModal').classList.add('active'); }
+        function closeProductModal() { document.getElementById('productModal').classList.remove('active'); }
+        function logout() { firebase.auth().signOut().then(() => window.location.href = "index.html"); }
+
+        function compressImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX = 600;
+                    let w = img.width, h = img.height;
+                    if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } } 
+                    else { if (h > MAX) { w *= MAX / h; h = MAX; } }
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    currentCompressedImage = canvas.toDataURL('image/jpeg', 0.7);
+                    document.getElementById('imagePreview').src = currentCompressedImage;
+                    document.getElementById('imagePreview').style.display = 'block';
+                }
+            }
+        }
+
+        function saveProduct() {
+            const name = document.getElementById('pName').value;
+            const price = document.getElementById('pPrice').value;
+            if(!name || !price) return alert("名稱與價格必填！");
+            
+            db.collection("products").add({
+                name: name, price: Number(price), category: document.getElementById('pCategory').value,
+                photoBase64: currentCompressedImage, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                alert("上架成功！"); closeProductModal();
+                document.getElementById('pName').value = ''; document.getElementById('pPrice').value = '';
+                document.getElementById('imagePreview').style.display = 'none'; currentCompressedImage = '';
+            });
+        }
+
+        function loadData() {
+            // 監聽訂單
+            db.collection("orders").orderBy("createdAt", "desc").onSnapshot(snap => {
+                const area = document.getElementById('orderListArea');
+                area.innerHTML = '';
+                let pendingCount = 0; let totalRev = 0;
+
+                snap.forEach(doc => {
+                    const o = doc.data();
+                    totalRev += o.price;
+                    if(o.status === "待處理") pendingCount++;
+
+                    let statusBtn = o.status === "待處理" 
+                        ? `<button class="btn-small btn-primary" onclick="updateOrderStatus('${doc.id}', '已完成')">標記完成</button>`
+                        : `<span style="font-size:0.8em; color:#888;">處理完畢</span>`;
+
+                    let statusClass = o.status === "待處理" ? "status-pending" : "status-done";
+
+                    area.innerHTML += `
+                        <div class="list-card">
+                            <div class="list-header">
+                                <span style="font-weight:bold; color:var(--gold);">${o.customerName}</span>
+                                <span class="status-badge ${statusClass}">${o.status}</span>
+                            </div>
+                            <div style="font-size:0.9em; color:var(--text-muted); margin-top: 10px;">
+                                <div>${o.itemName}</div>
+                                <div style="margin-top:5px; color:white; font-weight:bold; font-size: 1.1em;">金額: $${o.price}</div>
+                                <div style="margin-top:5px; font-size:0.85em; color:#888;">${o.contactInfo}</div>
+                            </div>
+                            <div style="text-align:right; margin-top:10px; border-top:1px solid rgba(255,255,255,0.05); padding-top:10px;">
+                                ${statusBtn}
+                            </div>
+                        </div>
+                    `;
+                });
+                document.getElementById('statPending').innerText = pendingCount;
+                document.getElementById('statRevenue').innerText = "$" + totalRev.toLocaleString();
+            });
+
+            // 監聽商品
+            db.collection("products").orderBy("createdAt", "desc").onSnapshot(snap => {
+                const area = document.getElementById('productListArea');
+                area.innerHTML = '';
+                document.getElementById('statProducts').innerText = snap.size;
+
+                snap.forEach(doc => {
+                    const p = doc.data();
+                    const img = p.photoBase64 ? `<img src="${p.photoBase64}" class="item-img">` : `<div class="item-img" style="display:flex; align-items:center; justify-content:center; font-size:0.8em; color:#999;">無圖</div>`;
+                    
+                    area.innerHTML += `
+                        <div class="list-card">
+                            <div class="list-body">
+                                ${img}
+                                <div style="flex:1;">
+                                    <div style="font-weight:bold; color:white;">${p.name}</div>
+                                    <div style="color:var(--gold); font-weight:bold; margin-top:3px;">$${p.price}</div>
+                                </div>
+                                <button class="btn-small btn-danger" onclick="deleteDoc('products', '${doc.id}')">下架</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+
+            // 監聽會員 (確保抓取資料庫內所有會員)
+            db.collection("users").orderBy("lastLogin", "desc").onSnapshot(snap => {
+                const area = document.getElementById('memberListArea');
+                area.innerHTML = '';
+                document.getElementById('statMembers').innerText = snap.size;
+
+                snap.forEach(doc => {
+                    const m = doc.data();
+                    // 若沒有 email 欄位，自動顯示 UID 避免報錯
+                    let displayEmail = m.email || "未設定信箱 (ID:" + doc.id.substring(0,5) + ")";
+                    let role = m.uid === superAdminUID ? "最高管理員" : (m.role === 'admin' ? "管理員" : "會員");
+                    let badgeClass = role === "會員" ? "status-pending" : "status-done";
+                    
+                    area.innerHTML += `
+                        <div class="list-card">
+                            <div class="list-header" style="border:none; padding-bottom:0;">
+                                <span style="font-size:0.9em; color: white;">${displayEmail}</span>
+                                <span class="status-badge ${badgeClass}">${role}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        function updateOrderStatus(docId, newStatus) { db.collection("orders").doc(docId).update({ status: newStatus }); }
+        function deleteDoc(col, id) { if(confirm("確定刪除嗎？")) db.collection(col).doc(id).delete(); }
+    </script>
+</body>
+</html>

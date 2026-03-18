@@ -3,227 +3,223 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>朵藍姆光工作室 | 專屬宇宙頻道</title>
+    <title>朵藍姆光商店 | 能量選物</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=PingFang+TC:wght@300;400;600&display=swap" rel="stylesheet">
-    
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <style>
-        /* --- 基礎星空設定 --- */
-        body { margin: 0; font-family: 'PingFang TC', sans-serif; background: linear-gradient(135deg, #0f051a 0%, #2a1147 50%, #1a0b2e 100%); color: #fce4ec; min-height: 100vh; }
-        .nav-header { padding: 20px 5%; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; }
-        .logo-text { font-family: 'Noto Serif TC', serif; font-size: 1.5em; color: #d4af37; font-weight: bold; text-decoration: none; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-        .btn-back { color: #c4b5d6; text-decoration: none; border: 1px solid #c4b5d6; padding: 8px 20px; border-radius: 30px; transition: 0.3s; font-size: 0.9em; }
-        .btn-back:hover { background: rgba(255,255,255,0.1); color: white; border-color: white; }
+        :root { --gold: #d4af37; --deep-purple: #1a0b2e; --text-light: #c4b5d6; }
+        body { margin: 0; font-family: 'PingFang TC', sans-serif; background: #0f051a; color: white; min-height: 100vh; }
         
-        /* --- 頁面標題 --- */
-        .shop-container { max-width: 1200px; margin: 40px auto 100px; padding: 0 5%; }
-        .shop-title { text-align: center; color: #d4af37; font-family: 'Noto Serif TC', serif; font-size: 2.5em; margin-bottom: 50px; text-shadow: 0 0 15px rgba(212,175,55,0.3); }
+        /* 導覽列優化 */
+        .nav-header { padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; background: rgba(26, 11, 46, 0.9); backdrop-filter: blur(15px); position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid rgba(212, 175, 55, 0.2); }
+        .logo { font-family: 'Noto Serif TC', serif; font-size: 1.4em; color: var(--gold); font-weight: bold; text-decoration: none; }
         
-        /* --- 商品網格與卡片設計 (毛玻璃質感) --- */
-        .products-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; }
-        .product-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(212,175,55,0.2); border-radius: 15px; overflow: hidden; backdrop-filter: blur(10px); transition: all 0.4s ease; display: flex; flex-direction: column; }
-        .product-card:hover { transform: translateY(-8px); border-color: rgba(212,175,55,0.6); box-shadow: 0 15px 30px rgba(0,0,0,0.4); background: rgba(255,255,255,0.06); }
-        
-        .product-img { width: 100%; height: 220px; background-color: #1a0b2e; background-size: cover; background-position: center; position: relative; }
-        .tag-badge { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.6); color: #d4af37; padding: 5px 12px; border-radius: 20px; font-size: 0.8em; border: 1px solid rgba(212,175,55,0.5); backdrop-filter: blur(5px); }
-        
-        .product-info { padding: 25px 20px; flex-grow: 1; display: flex; flex-direction: column; }
-        .product-info h3 { color: #d4af37; font-size: 1.4em; margin: 0 0 10px 0; font-family: 'Noto Serif TC', serif; }
-        .product-intro { color: #c4b5d6; font-size: 0.9em; line-height: 1.6; flex-grow: 1; margin-bottom: 15px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-        
-        .meta-data { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); }
-        .weight { color: #888; font-size: 0.9em; }
-        .price { font-size: 1.6em; font-weight: bold; color: white; }
-        
-        .btn-buy { background: linear-gradient(135deg, #d4af37 0%, #b8901b 100%); color: #1a0b2e; border: none; padding: 12px; border-radius: 30px; font-weight: bold; cursor: pointer; transition: 0.3s; width: 100%; font-size: 1.05em; }
-        .btn-buy:hover { box-shadow: 0 5px 15px rgba(212,175,55,0.4); transform: scale(1.02); }
+        .cart-trigger { background: var(--gold); color: var(--deep-purple); border: none; padding: 10px 20px; border-radius: 50px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
+        .cart-trigger:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
 
-        .loading-text { text-align: center; font-size: 1.2em; color: #888; margin-top: 50px; grid-column: 1 / -1; }
-
-        /* --- 質感結帳彈出表單 --- */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); justify-content: center; align-items: center; z-index: 2000; }
-        .modal.active { display: flex; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .modal-content { background: #1a0b2e; border: 1px solid #d4af37; padding: 40px; border-radius: 15px; width: 90%; max-width: 400px; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 1.8em; color: #888; cursor: pointer; }
-        .close-btn:hover { color: #d4af37; }
-        .modal h2 { color: #d4af37; margin-top: 0; font-family: 'Noto Serif TC', serif; margin-bottom: 5px; }
-        .order-item-name { color: white; font-size: 1.1em; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        /* 商品卡片優化 */
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
         
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; color: #c4b5d6; font-size: 0.9em; }
-        .form-group input { width: 100%; padding: 12px; border: 1px solid rgba(212,175,55,0.3); border-radius: 8px; background: rgba(0,0,0,0.3); color: white; box-sizing: border-box; font-size: 1em; transition: 0.3s; }
-        .form-group input:focus { outline: none; border-color: #d4af37; box-shadow: 0 0 10px rgba(212,175,55,0.2); background: rgba(0,0,0,0.5); }
-        .btn-confirm { width: 100%; background: #d4af37; color: #1a0b2e; border: none; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1.1em; cursor: pointer; margin-top: 10px; transition: 0.3s; }
-        .btn-confirm:hover { background: #f1c40f; box-shadow: 0 5px 15px rgba(212,175,55,0.4); }
+        .p-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; overflow: hidden; transition: 0.4s; position: relative; }
+        .p-card:hover { border-color: var(--gold); transform: translateY(-10px); }
+        .p-img { width: 100%; height: 250px; background-size: cover; background-position: center; transition: 0.5s; }
+        .p-card:hover .p-img { transform: scale(1.1); }
+        
+        .p-content { padding: 20px; background: linear-gradient(to top, rgba(26,11,46,1), transparent); }
+        .p-tag { font-size: 0.75em; color: var(--gold); border: 1px solid var(--gold); padding: 2px 8px; border-radius: 4px; }
+        .p-title { margin: 10px 0; font-size: 1.25em; font-family: 'Noto Serif TC', serif; }
+        .p-price { font-size: 1.4em; color: white; font-weight: bold; margin-bottom: 15px; }
+        
+        .btn-add { width: 100%; padding: 12px; background: transparent; border: 1px solid var(--gold); color: var(--gold); border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-add:hover { background: var(--gold); color: var(--deep-purple); }
+
+        /* 右側滑出購物車清單 */
+        .side-cart { position: fixed; right: -100%; top: 0; width: 400px; height: 100vh; background: #150826; z-index: 2000; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1); padding: 30px; box-sizing: border-box; display: flex; flex-direction: column; border-left: 1px solid var(--gold); }
+        .side-cart.active { right: 0; }
+        .cart-item { display: flex; gap: 15px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .cart-item-img { width: 60px; height: 60px; border-radius: 8px; background-size: cover; }
+        
+        /* 數量選擇器 */
+        .qty-box { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.1); border-radius: 8px; padding: 5px; }
+        .qty-btn { border: none; background: none; color: white; cursor: pointer; font-size: 1.2em; width: 30px; }
+        
+        /* 填單區 */
+        .checkout-form { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--gold); }
+        .input-group { margin-bottom: 12px; }
+        .input-group label { display: block; font-size: 0.8em; color: var(--text-light); margin-bottom: 4px; }
+        .input-group input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(212,175,55,0.3); background: rgba(0,0,0,0.3); color: white; box-sizing: border-box; }
+        
+        .total-price { font-size: 1.5em; display: flex; justify-content: space-between; margin: 20px 0; }
+        .btn-checkout { width: 100%; padding: 18px; background: var(--gold); color: var(--deep-purple); border: none; border-radius: 12px; font-weight: bold; font-size: 1.1em; cursor: pointer; }
+
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; z-index: 1500; }
+        .overlay.active { display: block; }
     </style>
 </head>
 <body>
 
-    <nav class="nav-header">
-        <a href="index.html" class="logo-text">朵藍姆光工作室</a>
-        <a href="index.html" class="btn-back">返回首頁</a>
-    </nav>
+<nav class="nav-header">
+    <a href="index.html" class="logo">朵藍姆光工作室</a>
+    <button class="cart-trigger" onclick="toggleCart()">
+        🛒 購物車 (<span id="cartCount">0</span>)
+    </button>
+</nav>
 
-    <div class="shop-container">
-        <h1 class="shop-title" id="categoryTitle">宇宙能量頻道</h1>
-        
-        <div class="products-grid" id="productsArea">
-            <div class="loading-text">正在為您讀取宇宙頻率與商品資訊... ✨</div>
-        </div>
+<div class="container">
+    <h1 style="text-align: center; font-family: 'Noto Serif TC'; color: var(--gold);" id="catTitle">載入中...</h1>
+    <div class="grid" id="productGrid"></div>
+</div>
+
+<div class="overlay" id="overlay" onclick="toggleCart()"></div>
+
+<div class="side-cart" id="sideCart">
+    <h2 style="color: var(--gold); margin-top: 0;">您的購物清單</h2>
+    <div style="flex: 1; overflow-y: auto;" id="cartList">
+        <p style="color: #888; text-align: center; margin-top: 50px;">購物車空空的喔 ✨</p>
     </div>
 
-    <div id="orderModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeOrderModal()">&times;</span>
-            <h2>填寫預約/寄送資訊</h2>
-            <div class="order-item-name" id="displayItemName">商品名稱將顯示於此</div>
-            
-            <div class="form-group">
-                <label>👤 您的姓名</label>
-                <input type="text" id="customerName" placeholder="請輸入姓名">
-            </div>
-            <div class="form-group">
-                <label>📱 聯絡方式 (LINE ID 或 手機)</label>
-                <input type="text" id="customerContact" placeholder="我們將以此與您聯繫確認細節">
-            </div>
-            <button class="btn-confirm" onclick="submitOrder()">送出訂單</button>
+    <div class="checkout-form">
+        <div class="total-price">總金額 <span id="totalDisplay">NT$ 0</span></div>
+        <div class="input-group">
+            <label>姓名</label>
+            <input type="text" id="orderName" placeholder="請輸入收件人姓名">
         </div>
+        <div class="input-group">
+            <label>LINE ID</label>
+            <input type="text" id="orderLine" placeholder="方便確認細節">
+        </div>
+        <div class="input-group">
+            <label>收件地址 / 預約備註</label>
+            <input type="text" id="orderAddress" placeholder="請輸入地址或備註">
+        </div>
+        <button class="btn-checkout" onclick="sendOrder()">立即結帳送出</button>
     </div>
+</div>
 
-    <script>
-        // 1. Firebase 初始化
-        const firebaseConfig = {
-            apiKey: "AIzaSyAwbENzVJ0-SWFv7DwU-I0IrIGTg1uOGKs",
-            authDomain: "duolanmu.firebaseapp.com",
-            projectId: "duolanmu",
-            storageBucket: "duolanmu.firebasestorage.app",
-            messagingSenderId: "11171522617",
-            appId: "1:11171522617:web:5d4cad219e3f903fba05e8"
-        };
-        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
-        const db = firebase.firestore();
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAwbENzVJ0-SWFv7DwU-I0IrIGTg1uOGKs",
+        authDomain: "duolanmu.firebaseapp.com",
+        projectId: "duolanmu",
+        storageBucket: "duolanmu.firebasestorage.app",
+        messagingSenderId: "11171522617",
+        appId: "1:11171522617:web:5d4cad219e3f903fba05e8"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-        // 2. 判斷客人點了哪個分類 (透過 URL 參數)
-        const urlParams = new URLSearchParams(window.location.search);
-        // 如果沒有帶參數，預設顯示 'product'
-        const currentCategory = urlParams.get('category') || 'product';
-        
-        const titleMap = { 
-            'angel': '👼 天使訊息解讀', 
-            'energy': '✨ 個人能量調整', 
-            'product': '🌿 靈性手作產品' 
-        };
-        if(titleMap[currentCategory]) {
-            document.getElementById('categoryTitle').innerText = titleMap[currentCategory];
+    const urlParams = new URLSearchParams(window.location.search);
+    const category = urlParams.get('category') || 'product';
+    const catTitles = { 'angel': '👼 天使訊息解讀', 'energy': '✨ 個人能量調整', 'product': '🌿 靈性手作產品' };
+    document.getElementById('catTitle').innerText = catTitles[category];
+
+    let cart = [];
+
+    // 1. 抓取商品
+    db.collection("products").where("category", "==", category).onSnapshot(snapshot => {
+        const grid = document.getElementById('productGrid');
+        grid.innerHTML = "";
+        snapshot.forEach(doc => {
+            const p = doc.data();
+            const img = p.photoBase64 || 'https://via.placeholder.com/300x300?text=No+Image';
+            grid.innerHTML += `
+                <div class="p-card">
+                    <div class="p-img" style="background-image: url(${img})"></div>
+                    <div class="p-content">
+                        <span class="p-tag">${p.tag || '能量選物'}</span>
+                        <h3 class="p-title">${p.name}</h3>
+                        <div class="p-price">NT$ ${p.price}</div>
+                        <button class="btn-add" onclick="addToCart('${doc.id}', '${p.name}', ${p.price}, '${img}')">加入購物車</button>
+                    </div>
+                </div>
+            `;
+        });
+    });
+
+    // 2. 購物車邏輯
+    function addToCart(id, name, price, img) {
+        const index = cart.findIndex(item => item.id === id);
+        if(index > -1) {
+            cart[index].qty++;
+        } else {
+            cart.push({ id, name, price, img, qty: 1 });
         }
+        renderCart();
+        if(!document.getElementById('sideCart').classList.contains('active')) toggleCart();
+    }
 
-        // 3. 抓取資料庫並繪製精美卡片
-        // 為了確保你能看到東西，我們先抓「所有商品」，然後用程式碼做分類篩選
-        db.collection("products").orderBy("createdAt", "desc").get()
-        .then((querySnapshot) => {
-            const area = document.getElementById("productsArea");
-            area.innerHTML = ""; // 清除載入中文字
-            
-            let hasProducts = false;
+    function changeQty(index, delta) {
+        cart[index].qty += delta;
+        if(cart[index].qty <= 0) cart.splice(index, 1);
+        renderCart();
+    }
 
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                
-                // --- ⚠️ 防呆機制 ---
-                // 因為我們前一個版本的後台，上架商品可能沒有寫入正確的 category，
-                // 為了讓你現在上架的商品一定能顯示出來，我們暫時把所有商品都顯示在「靈性手作產品」區，
-                // 或者如果有正確分類就照分類顯示。
-                if(data.category === currentCategory || (!data.category && currentCategory === 'product') || (data.category === 'product' && currentCategory === 'product')) {
-                    hasProducts = true;
-                    
-                    // 處理圖片 (如果沒有上傳照片，給一張預設的星空漸層圖)
-                    const bgImage = data.photoBase64 ? `url(${data.photoBase64})` : 'linear-gradient(45deg, #2a1147, #0f051a)';
-                    // 處理重量與標籤顯示
-                    const weightText = data.weight ? `⚖️ ${data.weight}g` : '';
-                    const tagText = data.tag ? `<div class="tag-badge">${data.tag}</div>` : '';
+    function renderCart() {
+        const list = document.getElementById('cartList');
+        const count = document.getElementById('cartCount');
+        const total = document.getElementById('totalDisplay');
+        let totalSum = 0;
+        let totalQty = 0;
 
-                    area.innerHTML += `
-                        <div class="product-card">
-                            <div class="product-img" style="background-image: ${bgImage};">
-                                ${tagText}
-                            </div>
-                            <div class="product-info">
-                                <h3>${data.name}</h3>
-                                <div class="product-intro">${data.intro || '店長尚未填寫簡介...'}</div>
-                                <div class="meta-data">
-                                    <span class="weight">${weightText}</span>
-                                    <span class="price">NT$ ${data.price}</span>
-                                </div>
-                                <button class="btn-buy" onclick="openOrderModal('${data.name}', ${data.price})">立即購買 / 預約</button>
+        if(cart.length === 0) {
+            list.innerHTML = `<p style="color: #888; text-align: center; margin-top: 50px;">購物車空空的喔 ✨</p>`;
+        } else {
+            list.innerHTML = cart.map((item, i) => {
+                totalSum += item.price * item.qty;
+                totalQty += item.qty;
+                return `
+                    <div class="cart-item">
+                        <div class="cart-item-img" style="background-image: url(${item.img})"></div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: bold;">${item.name}</div>
+                            <div style="color: var(--gold); font-size: 0.9em;">NT$ ${item.price}</div>
+                            <div class="qty-box" style="margin-top: 8px; width: fit-content;">
+                                <button class="qty-btn" onclick="changeQty(${i}, -1)">-</button>
+                                <span>${item.qty}</span>
+                                <button class="qty-btn" onclick="changeQty(${i}, 1)">+</button>
                             </div>
                         </div>
-                    `;
-                }
-            });
+                    </div>
+                `;
+            }).join('');
+        }
+        count.innerText = totalQty;
+        total.innerText = `NT$ ${totalSum}`;
+    }
 
-            if(!hasProducts) {
-                area.innerHTML = `<div class="loading-text">目前此頻道暫無開放項目喔！店長正在努力準備中... ✨</div>`;
-            }
-        }).catch(error => { 
-            console.error("抓取失敗", error); 
-            document.getElementById("productsArea").innerHTML = `<div class="loading-text" style="color:#e74c3c;">讀取失敗，請重新整理網頁。</div>`;
+    function toggleCart() {
+        document.getElementById('sideCart').classList.toggle('active');
+        document.getElementById('overlay').classList.toggle('active');
+    }
+
+    // 3. 送出訂單
+    function sendOrder() {
+        const name = document.getElementById('orderName').value;
+        const line = document.getElementById('orderLine').value;
+        const addr = document.getElementById('orderAddress').value;
+
+        if(!name || !line || cart.length === 0) return alert("請填寫完整資訊並挑選商品喔！");
+
+        const orderData = {
+            customerName: name,
+            contactInfo: `LINE: ${line} / 地址: ${addr}`,
+            itemName: cart.map(i => `${i.name}x${i.qty}`).join(', '),
+            price: cart.reduce((sum, i) => sum + (i.price * i.qty), 0),
+            status: "待處理",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        db.collection("orders").add(orderData).then(() => {
+            alert("🎉 訂單已傳送到宇宙與店長的手中！我們會盡快與您聯繫。");
+            cart = [];
+            renderCart();
+            toggleCart();
         });
-
-        // 4. 結帳彈出視窗邏輯
-        let currentOrderName = "";
-        let currentOrderPrice = 0;
-
-        function openOrderModal(itemName, itemPrice) {
-            currentOrderName = itemName;
-            currentOrderPrice = itemPrice;
-            document.getElementById('displayItemName').innerText = itemName + ` (NT$ ${itemPrice})`;
-            document.getElementById('orderModal').classList.add('active');
-        }
-
-        function closeOrderModal() {
-            document.getElementById('orderModal').classList.remove('active');
-        }
-
-        // 點擊黑屏背景關閉
-        window.onclick = function(e) { 
-            if (e.target == document.getElementById('orderModal')) closeOrderModal(); 
-        }
-
-        // 5. 將訂單寫入資料庫，通知老闆！
-        function submitOrder() {
-            const name = document.getElementById('customerName').value;
-            const contact = document.getElementById('customerContact').value;
-
-            if(!name || !contact) return alert("請填寫您的姓名與聯絡方式喔！");
-
-            const btn = document.querySelector('.btn-confirm');
-            btn.innerText = "傳送宇宙訂單中...";
-            btn.disabled = true;
-
-            db.collection("orders").add({
-                customerName: name,
-                contactInfo: contact,
-                itemName: currentOrderName,
-                price: currentOrderPrice,
-                status: "待處理",
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
-                alert("🎉 訂單傳送成功！店長將會盡快與您聯繫確認後續事宜。");
-                closeOrderModal();
-                // 清空輸入框
-                document.getElementById('customerName').value = "";
-                document.getElementById('customerContact').value = "";
-                btn.innerText = "送出訂單";
-                btn.disabled = false;
-            }).catch(error => {
-                alert("訂單送出失敗，請檢查網路連線後再試。");
-                btn.innerText = "送出訂單";
-                btn.disabled = false;
-            });
-        }
-    </script>
+    }
+</script>
 </body>
 </html>

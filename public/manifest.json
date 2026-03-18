@@ -1,0 +1,20 @@
+{
+  "name": "朵藍姆光工作室",
+  "short_name": "朵藍姆光",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0f051a",
+  "theme_color": "#d4af37",
+  "icons": [
+    {
+      "src": "大頭貼.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "大頭貼.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
