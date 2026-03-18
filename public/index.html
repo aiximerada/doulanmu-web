@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>朵藍姆光工作室 | 官方旗艦店</title>
     
-    <meta name="description" content="朵藍姆光工作室 - 尋找您的專屬頻率。提供天然純淨的手作香氛、能量手工皂，以及光語圖騰、天使訊息等靈性深層調頻服務。">
-    <meta name="keywords" content="朵藍姆光工作室, 馨藍朵, 手作, 香氛, 能量, 凃美玲, 手工皂, 能量調整, 天使訊息, 光語圖騰, 頻率重啟, 能量噴霧, 擴香石">
+    <meta name="description" content="朵藍姆光工作室 - 尋找您的專屬頻率。提供天然純淨的手作.香氛.能量產品，以及光語圖騰、天使訊息等靈性深層調頻服務。">
+    <meta name="keywords" content="朵藍姆光工作室, 手作, 香氛, 能量, 手工皂, 能量調整, 天使訊息, 光語圖騰, 頻率重啟, 能量噴霧, 擴香石">
     
     <meta property="og:title" content="朵藍姆光工作室 | 官方旗艦店">
     <meta property="og:description" content="天然植萃香氛 ｜ 靈性深層調頻 ｜ 找回內在力量。">
@@ -28,8 +28,7 @@
 
     <style>
         /* --- 全域質感設定 --- */
-        :root { --gold: #d4af37; --bg-dark: #0f051a; --bg-light: #1a0b2e; --text-main: #fce4ec; --text-muted: #c4b5d6; }
-        /* 背景設為透明，讓底下的星空圖層顯示出來 */
+        :root { --gold: #d4af37; --bg-dark: #0f051a; --text-main: #fce4ec; --text-muted: #c4b5d6; }
         body { margin: 0; font-family: 'PingFang TC', sans-serif; background: transparent; color: var(--text-main); overflow-x: hidden; scroll-behavior: smooth; }
         h1, h2, h3 { font-family: 'Noto Serif TC', serif; letter-spacing: 1px; }
         a { text-decoration: none; }
@@ -51,7 +50,7 @@
         .btn-primary { background: linear-gradient(135deg, #d4af37 0%, #b8901b 100%); color: var(--bg-dark); border: none; padding: 8px 20px; border-radius: 30px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 0.9em; box-shadow: 0 4px 10px rgba(212,175,55,0.3); }
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(212,175,55,0.5); }
 
-        /* --- 電商主視覺 Banner (移除按鈕，提升空靈感) --- */
+        /* --- 主視覺 Banner --- */
         .hero-banner { position: relative; padding: 220px 5% 150px; text-align: center; background: radial-gradient(circle at center, rgba(212,175,55,0.08) 0%, transparent 60%); }
         .hero-banner h1 { color: var(--gold); font-size: 3.5em; margin-bottom: 20px; text-shadow: 0 0 25px rgba(212,175,55,0.5); animation: gentle-glow 4s ease-in-out infinite alternate; }
         @keyframes gentle-glow { from { text-shadow: 0 0 15px rgba(212,175,55,0.3); } to { text-shadow: 0 0 35px rgba(212,175,55,0.8); } }
@@ -93,18 +92,6 @@
         .footer-links a:hover { color: var(--gold); }
         .security-guarantee { max-width: 800px; margin: 0 auto 30px; padding: 25px; background: rgba(255,255,255,0.03); border-radius: 15px; text-align: left; line-height: 1.8; color: #999; border: 1px solid rgba(255,255,255,0.05); }
         .security-guarantee strong { color: var(--gold); }
-
-        /* --- 登入彈窗 --- */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 2000; justify-content: center; align-items: center; }
-        .modal.active { display: flex; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-        .modal-content { background: var(--bg-light); border: 1px solid var(--gold); padding: 40px; border-radius: 20px; width: 90%; max-width: 380px; text-align: center; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
-        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 1.8em; color: #888; cursor: pointer; transition: 0.3s; }
-        .close-btn:hover { color: var(--gold); }
-        .form-input { width: 100%; padding: 14px; margin-bottom: 18px; border: 1px solid rgba(212,175,55,0.3); border-radius: 10px; background: rgba(0,0,0,0.4); color: white; box-sizing: border-box; font-size: 1em; transition: 0.3s; }
-        .form-input:focus { outline: none; border-color: var(--gold); background: rgba(0,0,0,0.6); box-shadow: 0 0 10px rgba(212,175,55,0.2); }
-        .btn-submit { width: 100%; padding: 15px; background: linear-gradient(135deg, #d4af37 0%, #b8901b 100%); color: var(--bg-dark); border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1.1em; transition: 0.3s; }
-        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(212,175,55,0.4); }
 
         @media (max-width: 768px) {
             .hero-banner { padding: 160px 20px 100px; }
@@ -183,33 +170,19 @@
         <div>© 2026 朵藍姆光工作室 (DouLanMu). All Rights Reserved. 版權所有，盜用必究。</div>
     </footer>
 
-    <div class="modal" id="loginModal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeLoginModal()">&times;</span>
-            <h2 style="color: var(--gold); margin-top: 0; margin-bottom: 5px;">會員登入</h2>
-            <p style="font-size: 0.9em; color: #aaa; margin-bottom: 25px;">登入以查看訂單狀態與專屬服務</p>
-            <input type="text" id="accountInput" class="form-input" placeholder="Email 帳號">
-            <input type="password" id="passwordInput" class="form-input" placeholder="密碼">
-            <button class="btn-submit" onclick="loginWithAccount()">確認登入</button>
-        </div>
-    </div>
-
     <script>
         // --- ✨ 生成漂浮星空 ---
         function initStars() {
             const bg = document.getElementById('star-bg');
-            const starCount = 120; // 星星數量
+            const starCount = 120;
             for(let i=0; i<starCount; i++) {
                 const star = document.createElement('div');
                 star.classList.add('star');
-                // 隨機大小 (0.5px - 3px)
                 const size = Math.random() * 2.5 + 0.5;
                 star.style.width = size + 'px';
                 star.style.height = size + 'px';
-                // 隨機位置
                 star.style.left = Math.random() * 100 + 'vw';
                 star.style.top = Math.random() * 100 + 'vh';
-                // 隨機閃爍與漂浮速度
                 star.style.animationDuration = (Math.random() * 3 + 2) + 's, ' + (Math.random() * 50 + 30) + 's';
                 star.style.animationDelay = (Math.random() * 5) + 's, ' + (Math.random() * -50) + 's';
                 bg.appendChild(star);
@@ -274,10 +247,6 @@
         window.onload = loadFeaturedProducts;
 
         // --- 會員系統邏輯 ---
-        function openLoginModal() { document.getElementById('loginModal').classList.add('active'); }
-        function closeLoginModal() { document.getElementById('loginModal').classList.remove('active'); }
-        window.onclick = function(e) { if (e.target == document.getElementById('loginModal')) closeLoginModal(); }
-
         let currentUserStatus = "guest";
         const superAdminUID = "zaq6RAandkQmPGFKwBdeZEWoArC2"; 
 
@@ -301,7 +270,7 @@
                         btn.innerText = "進入管理後台";
                     } else {
                         currentUserStatus = "member";
-                        btn.innerText = "登出帳號";
+                        btn.innerText = "進入會員中心";
                     }
                 });
             } else {
@@ -311,33 +280,14 @@
             }
         });
 
+        // 🌟 按鈕點擊行為 (未登入時跳轉到專屬 login 頁面)
         function handleMainBtnClick() {
-            if (currentUserStatus === "admin") {
+            if (currentUserStatus === "admin" || currentUserStatus === "member") {
                 window.location.href = "admin.html"; 
-            } else if (currentUserStatus === "member") {
-                if(confirm("確定要登出嗎？")) firebase.auth().signOut().then(() => alert("已為您安全登出"));
             } else {
-                openLoginModal();
+                // 跳轉到剛剛建立好的專屬登入頁面
+                window.location.href = "login.html";
             }
-        }
-
-        function loginWithAccount() {
-            const acc = document.getElementById('accountInput').value;
-            const pwd = document.getElementById('passwordInput').value;
-            if(!acc || !pwd) return alert("請輸入帳號與密碼！");
-
-            const btn = document.querySelector('.btn-submit');
-            btn.innerText = "連線中...";
-
-            firebase.auth().signInWithEmailAndPassword(acc, pwd)
-                .then(() => {
-                    btn.innerText = "確認登入";
-                    closeLoginModal();
-                })
-                .catch(() => {
-                    btn.innerText = "確認登入";
-                    alert("登入失敗，請檢查 Email 與密碼是否正確。");
-                });
         }
     </script>
 </body>
