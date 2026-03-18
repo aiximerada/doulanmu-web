@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>朵藍姆管理中心</title>
+    <title>朵藍姆會員暨管理中心</title>
     
+    <link rel="icon" href="大頭貼.png" type="image/png">
+    <link rel="apple-touch-icon" href="大頭貼.png">
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -17,74 +19,123 @@
 
     <style>
         :root { --gold: #d4af37; --bg: #0f051a; --card-bg: rgba(255,255,255,0.05); --text: #fce4ec; --text-muted: #c4b5d6; }
-        body { margin: 0; font-family: 'PingFang TC', sans-serif; background: linear-gradient(135deg, #0f051a 0%, #2a1147 50%, #1a0b2e 100%); color: var(--text); -webkit-tap-highlight-color: transparent; padding-bottom: 70px; min-height: 100vh; }
+        body { margin: 0; font-family: 'PingFang TC', sans-serif; background: transparent; color: var(--text); -webkit-tap-highlight-color: transparent; padding-bottom: 80px; min-height: 100vh; overflow-x: hidden; }
+        
+        /* --- ✨ 漂浮星空 --- */
+        #star-bg { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; background: linear-gradient(135deg, #05020a 0%, #150826 50%, #080312 100%); overflow: hidden; }
+        .star { position: absolute; background-color: #fff; border-radius: 50%; opacity: 0; animation: twinkle infinite ease-in-out, drift infinite linear; box-shadow: 0 0 4px #fff; }
+        @keyframes twinkle { 0%, 100% { opacity: 0.1; } 50% { opacity: 0.9; box-shadow: 0 0 10px rgba(212,175,55,0.8); } }
+        @keyframes drift { from { transform: translateY(10vh); } to { transform: translateY(-110vh); } }
 
         /* --- 頂部 Header --- */
-        .app-header { background: rgba(0,0,0,0.4); backdrop-filter: blur(10px); color: var(--gold); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .app-header h1 { font-size: 1.2em; margin: 0; font-family: 'Noto Serif TC'; letter-spacing: 1px; text-shadow: 0 0 10px rgba(212,175,55,0.3); }
-        .btn-logout { background: rgba(255,255,255,0.1); color: var(--text); border: 1px solid rgba(255,255,255,0.2); padding: 6px 15px; border-radius: 20px; font-size: 0.8em; cursor: pointer; }
+        .app-header { background: rgba(10, 4, 18, 0.85); backdrop-filter: blur(15px); color: var(--gold); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid rgba(212,175,55,0.2); box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        .app-header h1 { font-size: 1.2em; margin: 0; font-family: 'Noto Serif TC'; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; }
+        
+        /* 頂部縮圖 (會員專屬) */
+        .header-avatar { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid var(--gold); display: none; }
+
+        .header-actions { display: flex; gap: 10px; align-items: center; }
+        .btn-header { background: rgba(255,255,255,0.05); color: var(--text); border: 1px solid rgba(255,255,255,0.2); padding: 6px 15px; border-radius: 20px; font-size: 0.8em; cursor: pointer; text-decoration: none; display: inline-block; transition: 0.3s; }
+        .btn-header:hover { background: rgba(212,175,55,0.1); border-color: var(--gold); color: var(--gold); }
 
         /* --- 底部導覽列 --- */
         .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(15, 5, 26, 0.95); backdrop-filter: blur(15px); border-top: 1px solid rgba(212,175,55,0.2); display: flex; justify-content: space-around; padding: 10px 0; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); }
-        .nav-item { display: flex; flex-direction: column; align-items: center; color: #666; font-size: 0.8em; cursor: pointer; transition: 0.3s; flex: 1; }
+        .nav-item { display: none; flex-direction: column; align-items: center; color: #666; font-size: 0.8em; cursor: pointer; transition: 0.3s; flex: 1; }
+        .nav-item.visible { display: flex; }
         .nav-item.active { color: var(--gold); font-weight: bold; text-shadow: 0 0 10px rgba(212,175,55,0.5); }
         .nav-icon { font-size: 1.5em; margin-bottom: 3px; }
 
-        /* --- 懸浮新增按鈕 (FAB) --- */
-        .fab { position: fixed; bottom: 85px; right: 20px; width: 55px; height: 55px; background: linear-gradient(135deg, #d4af37 0%, #b8901b 100%); color: #1a0b2e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2em; box-shadow: 0 4px 15px rgba(212,175,55,0.5); z-index: 999; border: none; cursor: pointer; }
+        /* --- 懸浮新增按鈕 (管理員) --- */
+        .fab { display: none; position: fixed; bottom: 85px; right: 20px; width: 55px; height: 55px; background: linear-gradient(135deg, #d4af37 0%, #b8901b 100%); color: #1a0b2e; border-radius: 50%; align-items: center; justify-content: center; font-size: 2em; box-shadow: 0 4px 15px rgba(212,175,55,0.5); z-index: 999; border: none; cursor: pointer; }
 
         /* --- 內容區域 --- */
-        .tab-content { display: none; padding: 15px; animation: fadeIn 0.3s; }
+        .tab-content { display: none; padding: 20px 5%; max-width: 800px; margin: 0 auto; animation: fadeIn 0.3s; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        h3 { color: var(--gold); font-family: 'Noto Serif TC', serif; margin-top: 5px; }
+        h3 { color: var(--gold); font-family: 'Noto Serif TC', serif; margin-top: 5px; border-bottom: 1px solid rgba(212,175,55,0.2); padding-bottom: 10px; }
 
-        /* 儀表板數據卡片 */
+        /* 卡片設計 */
         .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         .data-card { background: var(--card-bg); border: 1px solid rgba(212,175,55,0.2); padding: 20px; border-radius: 15px; backdrop-filter: blur(10px); text-align: center; }
-        .data-card h4 { margin: 0; font-size: 0.85em; color: var(--text-muted); }
-        .data-card .value { font-size: 1.6em; font-weight: bold; color: white; margin-top: 5px; }
-
-        /* 列表卡片 */
         .list-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 15px; margin-bottom: 15px; backdrop-filter: blur(10px); display: flex; flex-direction: column; gap: 10px; }
-        .list-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
-        .list-body { display: flex; gap: 15px; align-items: center; }
-        .item-img { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
         
-        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75em; font-weight: bold; border: 1px solid transparent; }
+        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.8em; font-weight: bold; border: 1px solid transparent; display: inline-block; }
         .status-pending { background: rgba(230, 81, 0, 0.2); color: #ffb74d; border-color: rgba(255, 183, 77, 0.5); }
+        .status-progress { background: rgba(52, 152, 219, 0.2); color: #5dade2; border-color: rgba(52, 152, 219, 0.5); }
+        .status-shipped { background: rgba(155, 89, 182, 0.2); color: #ce93d8; border-color: rgba(155, 89, 182, 0.5); }
         .status-done { background: rgba(46, 125, 50, 0.2); color: #81c784; border-color: rgba(129, 199, 132, 0.5); }
 
-        .btn-small { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 6px; font-size: 0.85em; cursor: pointer; color: white; }
-        .btn-primary { background: var(--gold); color: #1a0b2e; border: none; font-weight: bold; }
-        .btn-danger { color: #ff8a80; background: rgba(255, 138, 128, 0.1); border-color: rgba(255, 138, 128, 0.3); }
+        .btn-small { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 6px; font-size: 0.85em; cursor: pointer; color: white; transition: 0.3s;}
+        .btn-small:hover { border-color: var(--gold); color: var(--gold); }
+        
+        /* 狀態選擇器 (管理員用) */
+        .status-select { background: rgba(0,0,0,0.5); color: var(--gold); border: 1px solid var(--gold); padding: 6px 10px; border-radius: 8px; font-size: 0.9em; outline: none; cursor: pointer; }
+        .status-select option { background: #1a0b2e; color: white; }
+
+        /* --- 表單 --- */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 0.9em; color: var(--text-muted); margin-bottom: 8px; font-weight: bold; }
+        .form-group input, .form-group select { width: 100%; padding: 14px; border: 1px solid rgba(212,175,55,0.3); border-radius: 10px; background: rgba(0,0,0,0.5); color: white; box-sizing: border-box; font-size: 1em; transition: 0.3s; }
+        .form-group input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 10px rgba(212,175,55,0.2); }
+        .btn-submit { width: 100%; background: linear-gradient(135deg, #d4af37 0%, #b8901b 100%); color: #1a0b2e; border: none; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 1.1em; margin-top: 10px; cursor: pointer; transition: 0.3s; }
+        
+        /* 大頭貼上傳區 */
+        .avatar-upload-area { text-align: center; margin-bottom: 25px; padding: 20px; background: rgba(255,255,255,0.02); border-radius: 15px; border: 1px dashed rgba(212,175,55,0.3); }
+        .avatar-preview { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold); margin-bottom: 10px; box-shadow: 0 0 15px rgba(212,175,55,0.3); background: #000; }
 
         /* --- 彈出表單 --- */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 2000; align-items: flex-end; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 2000; justify-content: center; align-items: center; }
         .modal.active { display: flex; }
-        .modal-content { background: #1a0b2e; border: 1px solid var(--gold); width: 100%; border-radius: 20px 20px 0 0; padding: 25px 20px 40px; box-sizing: border-box; max-height: 85vh; overflow-y: auto; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 0.85em; color: var(--text-muted); margin-bottom: 5px; font-weight: bold; }
-        .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid rgba(212,175,55,0.3); border-radius: 10px; background: rgba(0,0,0,0.5); color: white; box-sizing: border-box; font-size: 1em; }
-        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 10px rgba(212,175,55,0.2); }
-        .btn-submit { width: 100%; background: linear-gradient(135deg, #d4af37 0%, #b8901b 100%); color: #1a0b2e; border: none; padding: 15px; border-radius: 10px; font-weight: bold; font-size: 1.1em; margin-top: 10px; }
+        .modal-content { background: #1a0b2e; border: 1px solid var(--gold); width: 90%; max-width: 400px; border-radius: 20px; padding: 30px 20px; box-sizing: border-box; max-height: 85vh; overflow-y: auto; }
+        
     </style>
 </head>
 <body>
 
+    <div id="star-bg"></div>
+
     <div class="app-header">
-        <h1>朵藍姆管理中心</h1>
-        <button class="btn-logout" onclick="logout()">登出</button>
+        <h1>
+            <img id="headerAvatar" src="大頭貼.png" class="header-avatar">
+            <span id="headerTitle">朵藍姆會員中心</span>
+        </h1>
+        <div class="header-actions">
+            <a href="index.html" class="btn-header">🏠 回前台</a>
+            <button class="btn-header" onclick="logout()">登出</button>
+        </div>
     </div>
 
-    <div id="dashboard" class="tab-content active">
+    <div id="profile" class="tab-content active">
+        <h3>👤 我的帳號設定</h3>
+        
+        <div class="avatar-upload-area">
+            <img id="uAvatarImg" src="大頭貼.png" class="avatar-preview"><br>
+            <label for="uAvatarUpload" class="btn-small" style="cursor: pointer;">更換專屬大頭貼</label>
+            <input type="file" id="uAvatarUpload" accept="image/*" style="display: none;" onchange="uploadAvatar(event)">
+            <div style="font-size: 0.8em; color: #888; margin-top: 10px;">讓店長更容易認出您 ✨</div>
+        </div>
+
+        <div class="form-group"><label>登入信箱 (不可修改)</label><input type="text" id="uEmail" disabled style="color:#888;"></div>
+        <div class="form-group"><label>您的真實姓名</label><input type="text" id="uName" placeholder="請輸入姓名 (查詢訂單依據)"></div>
+        <div class="form-group"><label>手機號碼</label><input type="text" id="uPhone" placeholder="例如：0912345678"></div>
+        <div class="form-group"><label>LINE ID</label><input type="text" id="uLine" placeholder="請輸入方便聯繫的 LINE ID"></div>
+        <div class="form-group"><label>預設寄送地址</label><input type="text" id="uAddress" placeholder="若購買實體商品需填寫"></div>
+        <button class="btn-submit" onclick="saveProfile()">儲存設定</button>
+    </div>
+
+    <div id="myOrders" class="tab-content">
+        <h3>📦 我的訂單追蹤</h3>
+        <p style="color: #aaa; font-size: 0.9em; margin-bottom: 20px;">系統會根據您在「設定」中填寫的姓名，為您找回專屬訂單進度。</p>
+        <div id="myOrderListArea"></div>
+    </div>
+
+    <div id="dashboard" class="tab-content">
         <h3>營運總覽</h3>
         <div class="dashboard-grid">
-            <div class="data-card"><h4>待處理訂單</h4><div class="value" id="statPending" style="color:#ffb74d;">0</div></div>
-            <div class="data-card"><h4>總營業額</h4><div class="value" id="statRevenue" style="color:var(--gold);">0</div></div>
-            <div class="data-card"><h4>上架商品</h4><div class="value" id="statProducts">0</div></div>
-            <div class="data-card"><h4>會員人數</h4><div class="value" id="statMembers">0</div></div>
+            <div class="data-card"><h4 style="color:#c4b5d6; margin:0;">待處理訂單</h4><div class="value" id="statPending" style="color:#ffb74d;">0</div></div>
+            <div class="data-card"><h4 style="color:#c4b5d6; margin:0;">總營業額</h4><div class="value" id="statRevenue" style="color:var(--gold);">0</div></div>
+            <div class="data-card"><h4 style="color:#c4b5d6; margin:0;">上架商品</h4><div class="value" id="statProducts" style="color:white;">0</div></div>
+            <div class="data-card"><h4 style="color:#c4b5d6; margin:0;">會員人數</h4><div class="value" id="statMembers" style="color:white;">0</div></div>
         </div>
     </div>
 
@@ -94,28 +145,35 @@
     </div>
 
     <div id="orders" class="tab-content">
-        <h3>訂單列表</h3>
+        <h3>訂單列表與狀態管理</h3>
         <div id="orderListArea"></div>
     </div>
 
     <div id="members" class="tab-content">
-        <h3>會員權限</h3>
+        <h3>會員權限管理</h3>
         <div id="memberListArea"></div>
     </div>
 
-    <button class="fab" onclick="openProductModal()">+</button>
+    <button class="fab" id="fabBtn" onclick="openProductModal()">+</button>
 
     <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('dashboard', this)">
+        <div class="nav-item nav-member active" onclick="switchTab('profile', this)">
+            <div class="nav-icon">👤</div><div>設定</div>
+        </div>
+        <div class="nav-item nav-member" onclick="switchTab('myOrders', this)">
+            <div class="nav-icon">📦</div><div>我的訂單</div>
+        </div>
+        
+        <div class="nav-item nav-admin" onclick="switchTab('dashboard', this)">
             <div class="nav-icon">📊</div><div>首頁</div>
         </div>
-        <div class="nav-item" onclick="switchTab('orders', this)">
+        <div class="nav-item nav-admin" onclick="switchTab('orders', this)">
             <div class="nav-icon">📦</div><div>訂單</div>
         </div>
-        <div class="nav-item" onclick="switchTab('products', this)">
+        <div class="nav-item nav-admin" onclick="switchTab('products', this)">
             <div class="nav-icon">🌿</div><div>商品</div>
         </div>
-        <div class="nav-item" onclick="switchTab('members', this)">
+        <div class="nav-item nav-admin" onclick="switchTab('members', this)">
             <div class="nav-icon">👥</div><div>會員</div>
         </div>
     </div>
@@ -123,10 +181,9 @@
     <div id="productModal" class="modal" onclick="if(event.target==this) closeProductModal()">
         <div class="modal-content">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <h3 style="margin:0;">新增能量商品</h3>
-                <span onclick="closeProductModal()" style="font-size:1.5em; color:#888;">&times;</span>
+                <h3 style="margin:0; border:none; padding:0;">新增能量商品</h3>
+                <span onclick="closeProductModal()" style="font-size:1.5em; color:#888; cursor:pointer;">&times;</span>
             </div>
-            
             <div class="form-group">
                 <label>📷 照片上傳</label>
                 <input type="file" id="pPhoto" accept="image/*" onchange="compressImage(event)">
@@ -147,6 +204,23 @@
     </div>
 
     <script>
+        // 生成漂浮星空
+        function initStars() {
+            const bg = document.getElementById('star-bg');
+            for(let i=0; i<100; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                const size = Math.random() * 2 + 0.5;
+                star.style.width = size + 'px'; star.style.height = size + 'px';
+                star.style.left = Math.random() * 100 + 'vw'; star.style.top = Math.random() * 100 + 'vh';
+                star.style.animationDuration = (Math.random() * 3 + 2) + 's, ' + (Math.random() * 50 + 30) + 's';
+                star.style.animationDelay = (Math.random() * 5) + 's, ' + (Math.random() * -50) + 's';
+                bg.appendChild(star);
+            }
+        }
+        initStars();
+
+        // Firebase 初始化
         const firebaseConfig = {
             apiKey: "AIzaSyAwbENzVJ0-SWFv7DwU-I0IrIGTg1uOGKs",
             authDomain: "duolanmu.firebaseapp.com",
@@ -159,36 +233,168 @@
         const db = firebase.firestore();
 
         const superAdminUID = "zaq6RAandkQmPGFKwBdeZEWoArC2"; 
-        let currentCompressedImage = "";
+        let currentUID = "";
+        let currentUserName = ""; // 儲存會員姓名用來查訂單
 
+        // --- 🌟 核心權限安全驗證 ---
         firebase.auth().onAuthStateChanged((user) => {
             if (!user) {
-                window.location.href = "index.html";
+                window.location.href = "index.html"; 
             } else {
+                currentUID = user.uid;
+                document.getElementById('uEmail').value = user.email; 
+
                 db.collection("users").doc(user.uid).get().then(doc => {
-                    const data = doc.data();
-                    if (user.uid === superAdminUID || (data && data.role === "admin")) {
-                        loadData(); 
+                    const data = doc.data() || {};
+                    const isAdmin = user.uid === superAdminUID || data.role === "admin";
+                    
+                    setupUI(isAdmin);
+
+                    // 載入會員個人資料與頭像
+                    if(data.name) {
+                        currentUserName = data.name;
+                        document.getElementById('uName').value = data.name;
+                    }
+                    if(data.phone) document.getElementById('uPhone').value = data.phone;
+                    if(data.line) document.getElementById('uLine').value = data.line;
+                    if(data.address) document.getElementById('uAddress').value = data.address;
+                    if(data.avatar) {
+                        document.getElementById('uAvatarImg').src = data.avatar;
+                        document.getElementById('headerAvatar').src = data.avatar;
+                        document.getElementById('headerAvatar').style.display = "inline-block";
+                    }
+
+                    // 根據身分載入不同的資料
+                    if(isAdmin) {
+                        loadAdminData();
                     } else {
-                        alert("權限不足！");
-                        window.location.href = "index.html";
+                        loadMemberOrders(currentUserName);
                     }
                 });
             }
         });
 
+        // 介面權限分配
+        function setupUI(isAdmin) {
+            if (isAdmin) {
+                document.getElementById('headerTitle').innerText = "朵藍姆管理中心";
+                document.querySelectorAll('.nav-admin').forEach(el => el.classList.add('visible'));
+                document.querySelectorAll('.nav-member').forEach(el => el.classList.remove('visible'));
+                switchTab('dashboard', document.querySelector('.nav-admin'));
+            } else {
+                document.getElementById('headerTitle').innerText = "朵藍姆會員中心";
+                document.querySelectorAll('.nav-member').forEach(el => el.classList.add('visible'));
+                document.querySelectorAll('.nav-admin').forEach(el => el.classList.remove('visible'));
+                switchTab('profile', document.querySelector('.nav-member'));
+            }
+        }
+
+        // --- 👤 會員：頭像上傳處理 ---
+        function uploadAvatar(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    // 大頭貼壓縮得更小以節省空間
+                    const MAX = 250; let w = img.width, h = img.height;
+                    if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } } else { if (h > MAX) { w *= MAX / h; h = MAX; } }
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    const base64 = canvas.toDataURL('image/jpeg', 0.8);
+                    
+                    // 顯示並寫入資料庫
+                    document.getElementById('uAvatarImg').src = base64;
+                    document.getElementById('headerAvatar').src = base64;
+                    document.getElementById('headerAvatar').style.display = "inline-block";
+                    
+                    db.collection("users").doc(currentUID).update({ avatar: base64 })
+                      .then(() => alert("✨ 專屬頭像更新成功！"))
+                      .catch(err => alert("更新失敗：" + err.message));
+                }
+            }
+        }
+
+        // --- 👤 會員：儲存個人設定 ---
+        function saveProfile() {
+            const name = document.getElementById('uName').value.trim();
+            if(!name) return alert("姓名為必填，這是查詢訂單的依據喔！");
+
+            db.collection("users").doc(currentUID).set({
+                name: name, 
+                phone: document.getElementById('uPhone').value, 
+                line: document.getElementById('uLine').value, 
+                address: document.getElementById('uAddress').value
+            }, { merge: true }).then(() => {
+                alert("✅ 個人資料儲存成功！");
+                currentUserName = name;
+                loadMemberOrders(currentUserName); // 儲存後重新載入訂單
+            }).catch(err => alert("儲存失敗：" + err.message));
+        }
+
+        // --- 👤 會員：載入自己的訂單 ---
+        function loadMemberOrders(userName) {
+            const area = document.getElementById('myOrderListArea');
+            if(!userName) {
+                area.innerHTML = `<div style="text-align:center; color:#888; padding:40px 20px; background:rgba(255,255,255,0.02); border-radius:15px; border:1px dashed rgba(255,255,255,0.1);">請先在「設定」中填寫並儲存您的<strong style="color:var(--gold);">真實姓名</strong><br><br>系統才能為您找回專屬的宇宙訂單喔！✨</div>`;
+                return;
+            }
+
+            // 抓取所有符合姓名的訂單，並在本地排序時間
+            db.collection("orders").where("customerName", "==", userName).onSnapshot(snap => {
+                area.innerHTML = '';
+                if(snap.empty) {
+                    area.innerHTML = `<div style="text-align:center; color:#888; padding:40px 20px;">目前沒有查到您的訂單紀錄喔！快去商城逛逛吧 ✨</div>`;
+                    return;
+                }
+                
+                let orders = [];
+                snap.forEach(doc => orders.push(doc.data()));
+                // 依照下單時間由新到舊排序
+                orders.sort((a,b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+
+                orders.forEach(o => {
+                    // 判斷狀態給予不同顏色
+                    let sClass = "status-pending";
+                    if(o.status === "準備中") sClass = "status-progress";
+                    if(o.status === "已寄出") sClass = "status-shipped";
+                    if(o.status === "已送達" || o.status === "已完成") sClass = "status-done";
+
+                    area.innerHTML += `
+                        <div class="list-card">
+                            <div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px; margin-bottom:10px;">
+                                <span style="font-weight:bold; color:white;">🛍️ 購買項目</span>
+                                <span class="status-badge ${sClass}">${o.status}</span>
+                            </div>
+                            <div style="color:var(--text-muted); line-height:1.5;">${o.itemName}</div>
+                            <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top: 15px;">
+                                <div style="font-size:0.8em; color:#888;">下單時間: <br>${o.createdAt ? o.createdAt.toDate().toLocaleDateString() : '剛剛'}</div>
+                                <div style="color:var(--gold); font-weight:bold; font-size:1.1em;">總金額: $${o.price}</div>
+                            </div>
+                        </div>`;
+                });
+            });
+        }
+
+        // --- 頁籤切換控制 ---
         function switchTab(tabId, el) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             el.classList.add('active');
-            document.querySelector('.fab').style.display = (tabId === 'products') ? 'flex' : 'none';
+            document.getElementById('fabBtn').style.display = (tabId === 'products') ? 'flex' : 'none';
         }
 
-        function openProductModal() { document.getElementById('productModal').classList.add('active'); }
-        function closeProductModal() { document.getElementById('productModal').classList.remove('active'); }
         function logout() { firebase.auth().signOut().then(() => window.location.href = "index.html"); }
 
+        // --- 👑 管理員：商品上架邏輯 ---
+        function openProductModal() { document.getElementById('productModal').classList.add('active'); }
+        function closeProductModal() { document.getElementById('productModal').classList.remove('active'); }
+        
         function compressImage(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -199,10 +405,8 @@
                 img.src = e.target.result;
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    const MAX = 600;
-                    let w = img.width, h = img.height;
-                    if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } } 
-                    else { if (h > MAX) { w *= MAX / h; h = MAX; } }
+                    const MAX = 600; let w = img.width, h = img.height;
+                    if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } } else { if (h > MAX) { w *= MAX / h; h = MAX; } }
                     canvas.width = w; canvas.height = h;
                     canvas.getContext('2d').drawImage(img, 0, 0, w, h);
                     currentCompressedImage = canvas.toDataURL('image/jpeg', 0.7);
@@ -227,97 +431,113 @@
             });
         }
 
-        function loadData() {
-            // 監聽訂單
+        // --- 👑 管理員：載入全站數據 ---
+        function loadAdminData() {
+            // 1. 訂單 (包含新版狀態下拉選單)
             db.collection("orders").orderBy("createdAt", "desc").onSnapshot(snap => {
-                const area = document.getElementById('orderListArea');
-                area.innerHTML = '';
+                const area = document.getElementById('orderListArea'); area.innerHTML = '';
                 let pendingCount = 0; let totalRev = 0;
-
+                
                 snap.forEach(doc => {
-                    const o = doc.data();
-                    totalRev += o.price;
+                    const o = doc.data(); totalRev += o.price;
                     if(o.status === "待處理") pendingCount++;
-
-                    let statusBtn = o.status === "待處理" 
-                        ? `<button class="btn-small btn-primary" onclick="updateOrderStatus('${doc.id}', '已完成')">標記完成</button>`
-                        : `<span style="font-size:0.8em; color:#888;">處理完畢</span>`;
-
-                    let statusClass = o.status === "待處理" ? "status-pending" : "status-done";
+                    
+                    // 🌟 進階狀態選擇器
+                    const statuses = ["待處理", "準備中", "已寄出", "已送達", "已完成"];
+                    let selectHtml = `<select class="status-select" onchange="updateOrderStatus('${doc.id}', this.value)">`;
+                    statuses.forEach(s => {
+                        let selected = (o.status === s) ? "selected" : "";
+                        selectHtml += `<option value="${s}" ${selected}>${s}</option>`;
+                    });
+                    selectHtml += `</select>`;
 
                     area.innerHTML += `
                         <div class="list-card">
-                            <div class="list-header">
-                                <span style="font-weight:bold; color:var(--gold);">${o.customerName}</span>
-                                <span class="status-badge ${statusClass}">${o.status}</span>
+                            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
+                                <span style="font-weight:bold; color:var(--gold); font-size:1.1em;">${o.customerName}</span>
+                                ${selectHtml}
                             </div>
                             <div style="font-size:0.9em; color:var(--text-muted); margin-top: 10px;">
                                 <div>${o.itemName}</div>
-                                <div style="margin-top:5px; color:white; font-weight:bold; font-size: 1.1em;">金額: $${o.price}</div>
-                                <div style="margin-top:5px; font-size:0.85em; color:#888;">${o.contactInfo}</div>
+                                <div style="margin-top:8px; color:white; font-weight:bold; font-size: 1.1em;">總額: $${o.price}</div>
+                                <div style="margin-top:8px; font-size:0.85em; color:#888; background:rgba(0,0,0,0.3); padding:8px; border-radius:8px;">聯絡: ${o.contactInfo}</div>
                             </div>
-                            <div style="text-align:right; margin-top:10px; border-top:1px solid rgba(255,255,255,0.05); padding-top:10px;">
-                                ${statusBtn}
-                            </div>
-                        </div>
-                    `;
+                        </div>`;
                 });
                 document.getElementById('statPending').innerText = pendingCount;
                 document.getElementById('statRevenue').innerText = "$" + totalRev.toLocaleString();
             });
 
-            // 監聽商品
+            // 2. 商品
             db.collection("products").orderBy("createdAt", "desc").onSnapshot(snap => {
-                const area = document.getElementById('productListArea');
-                area.innerHTML = '';
+                const area = document.getElementById('productListArea'); area.innerHTML = '';
                 document.getElementById('statProducts').innerText = snap.size;
-
                 snap.forEach(doc => {
                     const p = doc.data();
-                    const img = p.photoBase64 ? `<img src="${p.photoBase64}" class="item-img">` : `<div class="item-img" style="display:flex; align-items:center; justify-content:center; font-size:0.8em; color:#999;">無圖</div>`;
-                    
+                    const img = p.photoBase64 ? `<img src="${p.photoBase64}" style="width:60px; height:60px; border-radius:10px; object-fit:cover;">` : `<div style="width:60px; height:60px; border-radius:10px; background:#000; display:flex; align-items:center; justify-content:center; font-size:0.8em; color:#666;">無圖</div>`;
                     area.innerHTML += `
-                        <div class="list-card">
-                            <div class="list-body">
-                                ${img}
-                                <div style="flex:1;">
-                                    <div style="font-weight:bold; color:white;">${p.name}</div>
-                                    <div style="color:var(--gold); font-weight:bold; margin-top:3px;">$${p.price}</div>
-                                </div>
-                                <button class="btn-small btn-danger" onclick="deleteDoc('products', '${doc.id}')">下架</button>
+                        <div class="list-card" style="flex-direction:row; align-items:center; gap:15px;">
+                            ${img}
+                            <div style="flex:1;">
+                                <div style="font-weight:bold; color:white;">${p.name}</div>
+                                <div style="color:var(--gold); font-weight:bold; margin-top:3px;">$${p.price}</div>
                             </div>
-                        </div>
-                    `;
+                            <button class="btn-small" style="color:#ff8a80; background:rgba(255,138,128,0.1); border-color:rgba(255,138,128,0.3);" onclick="deleteDoc('products', '${doc.id}')">下架</button>
+                        </div>`;
                 });
             });
 
-            // 監聽會員 (確保抓取資料庫內所有會員)
+            // 3. 會員
             db.collection("users").orderBy("lastLogin", "desc").onSnapshot(snap => {
-                const area = document.getElementById('memberListArea');
-                area.innerHTML = '';
+                const area = document.getElementById('memberListArea'); area.innerHTML = '';
                 document.getElementById('statMembers').innerText = snap.size;
-
                 snap.forEach(doc => {
                     const m = doc.data();
-                    // 若沒有 email 欄位，自動顯示 UID 避免報錯
-                    let displayEmail = m.email || "未設定信箱 (ID:" + doc.id.substring(0,5) + ")";
-                    let role = m.uid === superAdminUID ? "最高管理員" : (m.role === 'admin' ? "管理員" : "會員");
-                    let badgeClass = role === "會員" ? "status-pending" : "status-done";
+                    let displayEmail = m.email || "未設定信箱";
+                    let role = m.uid === superAdminUID ? "最高管理員" : (m.role === 'admin' ? "管理員" : "一般會員");
+                    let badgeClass = role === "一般會員" ? "status-pending" : "status-done";
                     
+                    let avatarHtml = m.avatar ? `<img src="${m.avatar}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:1px solid var(--gold);">` : `<div style="width:40px; height:40px; border-radius:50%; background:#333; display:flex; align-items:center; justify-content:center; font-size:1.2em;">👤</div>`;
+
+                    let roleBtn = "";
+                    if(m.uid !== superAdminUID) {
+                        if(role === "一般會員") {
+                            roleBtn = `<button class="btn-small" onclick="changeRole('${doc.id}', 'admin')">升級管理員</button>`;
+                        } else {
+                            roleBtn = `<button class="btn-small" style="color:#ffb74d; border-color:#ffb74d;" onclick="changeRole('${doc.id}', 'member')">降級會員</button>`;
+                        }
+                    }
+
                     area.innerHTML += `
-                        <div class="list-card">
-                            <div class="list-header" style="border:none; padding-bottom:0;">
-                                <span style="font-size:0.9em; color: white;">${displayEmail}</span>
-                                <span class="status-badge ${badgeClass}">${role}</span>
+                        <div class="list-card" style="flex-direction:row; align-items:center; justify-content:space-between;">
+                            <div style="display:flex; align-items:center; gap:12px;">
+                                ${avatarHtml}
+                                <div>
+                                    <div style="font-size:0.9em; color: white;">${displayEmail}</div>
+                                    <div style="margin-top:3px;"><span class="status-badge ${badgeClass}" style="padding:2px 8px; font-size:0.7em;">${role}</span></div>
+                                </div>
                             </div>
-                        </div>
-                    `;
+                            <div>${roleBtn}</div>
+                        </div>`;
                 });
             });
         }
 
-        function updateOrderStatus(docId, newStatus) { db.collection("orders").doc(docId).update({ status: newStatus }); }
+        // --- 👑 管理員：更新訂單狀態 ---
+        function updateOrderStatus(docId, newStatus) { 
+            db.collection("orders").doc(docId).update({ status: newStatus })
+              .then(() => alert(`✅ 訂單狀態已更新為：${newStatus}`));
+        }
+
         function deleteDoc(col, id) { if(confirm("確定刪除嗎？")) db.collection(col).doc(id).delete(); }
+        
+        function changeRole(uid, newRole) {
+            if(confirm(`確定要更改此會員的權限嗎？`)) {
+                db.collection("users").doc(uid).update({ role: newRole })
+                .then(() => alert("權限更新成功！"))
+                .catch(err => alert("更新失敗：" + err.message));
+            }
+        }
     </script>
 </body>
 </html>

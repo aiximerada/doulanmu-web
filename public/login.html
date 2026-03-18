@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>登入 | 朵藍姆光工作室</title>
+    
+    <link rel="icon" href="大頭貼.png" type="image/png">
+    <link rel="apple-touch-icon" href="大頭貼.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f051a">
+
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=PingFang+TC:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root { --gold: #d4af37; --bg-dark: #0f051a; --text-main: #fce4ec; }
+        body { margin: 0; font-family: 'PingFang TC', sans-serif; background: transparent; color: var(--text-main); height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        
+        #star-bg { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; background: linear-gradient(135deg, #05020a 0%, #150826 50%, #080312 100%); }
+        .star { position: absolute; background-color: #fff; border-radius: 50%; opacity: 0; animation: twinkle infinite ease-in-out, drift infinite linear; box-shadow: 0 0 4px #fff; }
+        @keyframes twinkle { 0%, 100% { opacity: 0.1; } 50% { opacity: 0.9; box-shadow: 0 0 10px rgba(212,175,55,0.8); } }
+        @keyframes drift { from { transform: translateY(10vh); } to { transform: translateY(-110vh); } }
+
+        .login-card { background: rgba(26, 11, 46, 0.85); border: 1px solid rgba(212,175,55,0.3); border-radius: 20px; padding: 40px 30px; width: 90%; max-width: 400px; text-align: center; backdrop-filter: blur(15px); box-shadow: 0 20px 50px rgba(0,0,0,0.6); animation: slideUp 0.5s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .logo-img { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--gold); margin-bottom: 15px; object-fit: cover; box-shadow: 0 0 15px rgba(212,175,55,0.4); }
+        .login-card h2 { color: var(--gold); margin: 0 0 5px 0; font-family: 'Noto Serif TC', serif; font-size: 1.8em; }
+        .login-card p { color: #aaa; font-size: 0.9em; margin-bottom: 25px; }
+
+        .form-input { width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid rgba(212,175,55,0.2); border-radius: 10px; background: rgba(0,0,0,0.4); color: white; box-sizing: border-box; font-size: 1em; transition: 0.3s; }
+        .form-input:focus { outline: none; border-color: var(--gold); background: rgba(0,0,0,0.6); box-shadow: 0 0 10px rgba(212,175,55,0.2); }
+        
+        .btn-submit { width: 100%; padding: 15px; background: linear-gradient(135deg, #d4af37 0%, #b8901b 100%); color: #1a0b2e; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1.1em; transition: 0.3s; margin-bottom: 15px; }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(212,175,55,0.4); }
+
+        .divider { display: flex; align-items: center; margin: 20px 0; color: #888; font-size: 0.85em; }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid rgba(255,255,255,0.1); margin: 0 10px; }
+
+        /* 🌟 LINE 登入按鈕 */
+        .btn-line { width: 100%; padding: 15px; background: #06C755; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1.1em; transition: 0.3s; margin-bottom: 12px; }
+        .btn-line:hover { background: #05a546; box-shadow: 0 5px 15px rgba(6,199,85,0.4); transform: translateY(-2px); }
+
+        .back-link { display: block; margin-top: 25px; color: #888; text-decoration: none; font-size: 0.9em; transition: 0.3s; }
+        .back-link:hover { color: var(--gold); }
+    </style>
+</head>
+<body>
+
+    <div id="star-bg"></div>
+
+    <div class="login-card">
+        <img src="大頭貼.png" class="logo-img" alt="朵藍姆光工作室">
+        <h2>歡迎來到朵藍姆</h2>
+        <p>登入宇宙頻道，開啟您的專屬能量</p>
+
+        <button class="btn-line" onclick="loginWithLine()">
+            以 LINE 帳號快速登入
+        </button>
+
+        <div class="divider">或使用 Email 登入 / 註冊</div>
+
+        <input type="email" id="emailInput" class="form-input" placeholder="請輸入 Email">
+        <input type="password" id="passwordInput" class="form-input" placeholder="請輸入密碼 (至少6碼)">
+        <button class="btn-submit" id="mainBtn" onclick="handleEmailLogin()">進入系統</button>
+        
+        <a href="index.html" class="back-link">🏠 返回官方首頁</a>
+    </div>
+
+    <script>
+        function initStars() {
+            const bg = document.getElementById('star-bg');
+            for(let i=0; i<80; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                const size = Math.random() * 2.5 + 0.5;
+                star.style.width = size + 'px'; star.style.height = size + 'px';
+                star.style.left = Math.random() * 100 + 'vw'; star.style.top = Math.random() * 100 + 'vh';
+                star.style.animationDuration = (Math.random() * 3 + 2) + 's, ' + (Math.random() * 50 + 30) + 's';
+                star.style.animationDelay = (Math.random() * 5) + 's, ' + (Math.random() * -50) + 's';
+                bg.appendChild(star);
+            }
+        }
+        initStars();
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAwbENzVJ0-SWFv7DwU-I0IrIGTg1uOGKs",
+            authDomain: "duolanmu.firebaseapp.com",
+            projectId: "duolanmu",
+            storageBucket: "duolanmu.firebasestorage.app",
+            messagingSenderId: "11171522617",
+            appId: "1:11171522617:web:5d4cad219e3f903fba05e8"
+        };
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const db = firebase.firestore();
+        const superAdminUID = "zaq6RAandkQmPGFKwBdeZEWoArC2"; 
+
+        // --- 🌟 處理成功登入後的建檔與跳轉 ---
+        function handleSuccessfulLogin(user) {
+            const btn = document.getElementById('mainBtn');
+            if(btn) btn.innerText = "驗證宇宙頻率中...";
+            
+            // 將用戶寫入資料庫，並給予 "member" 權限
+            db.collection("users").doc(user.uid).set({
+                email: user.email || "LINE 登入無信箱",
+                uid: user.uid,
+                role: user.uid === superAdminUID ? "admin" : "member",
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true }).then(() => {
+                window.location.href = "admin.html";
+            }).catch(error => {
+                alert("資料建立失敗：" + error.message);
+                if(btn) btn.innerText = "進入系統";
+            });
+        }
+
+        // --- 🔥 啟動 LINE 登入 ---
+        function loginWithLine() {
+            // 直接跳轉到我們剛剛架好的後端大腦
+            window.location.href = "https://us-central1-duolanmu.cloudfunctions.net/lineLogin";
+        }
+
+        // --- 🔥 接收從 LINE 登入回來的 Token ---
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+
+            if (token) {
+                // 如果網址有 token，代表他是剛從 LINE 授權回來的客人
+                const btn = document.getElementById('mainBtn');
+                if(btn) btn.innerText = "LINE 驗證中...";
+
+                // 用這個 Token 跟 Firebase 換取登入身分
+                firebase.auth().signInWithCustomToken(token)
+                    .then((userCredential) => {
+                        handleSuccessfulLogin(userCredential.user);
+                    })
+                    .catch((error) => {
+                        alert("LINE 登入發生錯誤，請稍後再試。");
+                        window.history.replaceState({}, document.title, "/login.html"); // 把網址清乾淨
+                        if(btn) btn.innerText = "進入系統";
+                    });
+            }
+        };
+
+        // --- Email 登入 ---
+        function handleEmailLogin() {
+            const email = document.getElementById('emailInput').value;
+            const pwd = document.getElementById('passwordInput').value;
+            if(!email || !pwd) return alert("請輸入 Email 與密碼喔！");
+            const btn = document.getElementById('mainBtn');
+            btn.innerText = "連線中...";
+
+            firebase.auth().signInWithEmailAndPassword(email, pwd)
+                .then((userCredential) => { handleSuccessfulLogin(userCredential.user); })
+                .catch((error) => {
+                    if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                        if(confirm("查無此帳號，是否要直接註冊成為新會員？")) {
+                            firebase.auth().createUserWithEmailAndPassword(email, pwd)
+                                .then((userCredential) => {
+                                    alert("🎉 註冊成功！歡迎加入。");
+                                    handleSuccessfulLogin(userCredential.user);
+                                })
+                                .catch(regError => { alert("註冊失敗：" + regError.message); btn.innerText = "進入系統"; });
+                        } else { btn.innerText = "進入系統"; }
+                    } else { alert("登入失敗，請檢查密碼是否正確。"); btn.innerText = "進入系統"; }
+                });
+        }
+    </script>
+</body>
+</html>
