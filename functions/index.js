@@ -1,23 +1,17 @@
-const functions = require("firebase-functions");
+const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 admin.initializeApp();
 const db = admin.firestore();
 
-// ==========================================
-// 🔑 第一區：金鑰與基本設定 (已全部解鎖配置完畢！)
-// ==========================================
+// 🔑 LINE 金鑰設定
 const LINE_CHANNEL_ID = "2009522496";
 const LINE_CHANNEL_SECRET = "06f8a9ae273517d78f845975ebe8eb62";
 const CALLBACK_URL = "https://us-central1-duolanmu.cloudfunctions.net/lineCallback";
 
-// Messaging API Token
 const LINE_ACCESS_TOKEN = "p6ugh27GDssmbdkmySR4Z/6QykwBCwpxyQzRvpjJqJAR8zGbTUH0MbhlsMYKAZFrcEWozoAXRflXW+z5P0+EWNPPgVXfjkeYAcFrRleCM3Spwdjsy43Af2S3yNwEoY+G8Us2LtzKXcMpjVQ8DnOovAdB04t89/1O/w1cDnyilFU="; 
-// 店長專屬 User ID
 const ADMIN_LINE_ID = "U438eb7cb22b7077937c59815811eee40"; 
 
-// ==========================================
-// 🌐 第二區：LINE 登入與會員綁定系統
-// ==========================================
+// 🌐 LINE 登入系統
 exports.lineLogin = functions.https.onRequest((req, res) => {
     const url = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${LINE_CHANNEL_ID}&redirect_uri=${encodeURIComponent(CALLBACK_URL)}&state=12345abcde&scope=profile%20openid%20email`;
     res.redirect(url);
@@ -56,9 +50,7 @@ exports.lineCallback = functions.https.onRequest(async (req, res) => {
     }
 });
 
-// ==========================================
-// 🤖 第三區：LINE 智慧客服機器人 (Webhook)
-// ==========================================
+// 🤖 LINE 智慧客服機器人 (Webhook)
 exports.lineWebhook = functions.https.onRequest(async (req, res) => {
     if (req.method !== "POST") return res.status(200).send("OK");
     const events = req.body.events;
@@ -69,13 +61,11 @@ exports.lineWebhook = functions.https.onRequest(async (req, res) => {
             const userId = event.source.userId;
             const replyToken = event.replyToken;
 
-            // 🧠 智慧關鍵字辨識
             if (/(訂單|進度|查詢|物流|出貨|買了什麼)/.test(text)) {
                 await handleOrderQuery(userId, replyToken);
             } else if (/(商品|買|推薦|商城|購物|手作|皂|能量|天使)/.test(text)) {
                 await handleProductQuery(replyToken);
             } else {
-                // 無法辨識時，給予「智慧引導按鈕卡片」
                 await replyLineMessage(replyToken, fallbackCard());
             }
         }
@@ -83,7 +73,6 @@ exports.lineWebhook = functions.https.onRequest(async (req, res) => {
     res.status(200).send("OK");
 });
 
-// 處理「查詢訂單」邏輯
 async function handleOrderQuery(userId, replyToken) {
     try {
         const userDoc = await db.collection("users").doc(`line:${userId}`).get();
@@ -109,7 +98,6 @@ async function handleOrderQuery(userId, replyToken) {
     }
 }
 
-// 處理「查詢商品」邏輯
 async function handleProductQuery(replyToken) {
     try {
         const productsSnap = await db.collection("products").orderBy("createdAt", "desc").limit(5).get();
@@ -133,118 +121,43 @@ async function handleProductQuery(replyToken) {
     }
 }
 
-// ==========================================
-// 📤 第四區：訂單自動推播系統 (Firestore Trigger)
-// ==========================================
+// 📤 訂單自動推播系統
 exports.notifyNewOrder = functions.firestore.document('orders/{orderId}').onCreate(async (snap, context) => {
     const order = snap.data();
-
-    // 1. 發送精美卡片給【店長/管理員】
-    if (ADMIN_LINE_ID) {
-        await pushLineMessage(ADMIN_LINE_ID, orderStatusCard(order, "🔔 新訂單通知 (店長專屬)"));
-    }
-
-    // 2. 發送精美卡片給【下單的客人】
+    if (ADMIN_LINE_ID) await pushLineMessage(ADMIN_LINE_ID, orderStatusCard(order, "🔔 新訂單通知 (店長專屬)"));
     try {
         const usersSnap = await db.collection('users').where('name', '==', order.customerName).get();
         if (!usersSnap.empty) {
             const userDoc = usersSnap.docs[0];
             const uid = userDoc.id; 
-            if (uid.startsWith('line:')) {
-                const customerLineId = uid.replace('line:', '');
-                await pushLineMessage(customerLineId, orderStatusCard(order, "🎉 訂單成立通知"));
-            }
+            if (uid.startsWith('line:')) await pushLineMessage(uid.replace('line:', ''), orderStatusCard(order, "🎉 訂單成立通知"));
         }
     } catch (e) { console.error("通知客人失敗", e); }
 });
 
-// ==========================================
-// 🎨 第五區：LINE 訊息發送與卡片設計庫
-// ==========================================
-
+// 🎨 LINE 卡片設計庫
 async function replyLineMessage(replyToken, messages) {
     await fetch('https://api.line.me/v2/bot/message/reply', {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${LINE_ACCESS_TOKEN}` },
         body: JSON.stringify({ replyToken: replyToken, messages: Array.isArray(messages) ? messages : [messages] })
     });
 }
-
 async function pushLineMessage(userId, messages) {
     await fetch('https://api.line.me/v2/bot/message/push', {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${LINE_ACCESS_TOKEN}` },
         body: JSON.stringify({ to: userId, messages: Array.isArray(messages) ? messages : [messages] })
     });
 }
-
 function orderStatusCard(order, titleText) {
-    return {
-        type: "flex", altText: titleText,
-        contents: {
-            type: "bubble",
-            header: { type: "box", layout: "vertical", backgroundColor: "#1a0b2e", contents: [
-                { type: "text", text: titleText, weight: "bold", color: "#d4af37", size: "md" }
-            ]},
-            body: { type: "box", layout: "vertical", spacing: "md", contents: [
-                { type: "box", layout: "horizontal", contents: [ { type: "text", text: "訂購人", color: "#888888", size: "sm", flex: 2 }, { type: "text", text: order.customerName, color: "#111111", size: "sm", flex: 5, wrap: true } ] },
-                { type: "box", layout: "horizontal", contents: [ { type: "text", text: "目前狀態", color: "#888888", size: "sm", flex: 2 }, { type: "text", text: order.status, color: "#e74c3c", weight: "bold", size: "sm", flex: 5 } ] },
-                { type: "box", layout: "horizontal", contents: [ { type: "text", text: "商品明細", color: "#888888", size: "sm", flex: 2 }, { type: "text", text: order.itemName, color: "#111111", size: "sm", flex: 5, wrap: true } ] },
-                { type: "separator", margin: "md", color: "#d4af37" },
-                { type: "box", layout: "horizontal", margin: "md", contents: [ { type: "text", text: "總計金額", color: "#888888", size: "sm", flex: 2 }, { type: "text", text: `NT$ ${order.price}`, color: "#d4af37", weight: "bold", size: "md", flex: 5 } ] }
-            ]},
-            footer: { type: "box", layout: "vertical", contents: [
-                { type: "button", style: "primary", color: "#d4af37", action: { type: "uri", label: "查看訂單詳情", uri: "https://duolanmu.com/admin.html" } }
-            ]}
-        }
-    };
+    return { type: "flex", altText: titleText, contents: { type: "bubble", header: { type: "box", layout: "vertical", backgroundColor: "#1a0b2e", contents: [ { type: "text", text: titleText, weight: "bold", color: "#d4af37", size: "md" } ]}, body: { type: "box", layout: "vertical", spacing: "md", contents: [ { type: "box", layout: "horizontal", contents: [ { type: "text", text: "訂購人", color: "#888888", size: "sm", flex: 2 }, { type: "text", text: order.customerName, color: "#111111", size: "sm", flex: 5, wrap: true } ] }, { type: "box", layout: "horizontal", contents: [ { type: "text", text: "目前狀態", color: "#888888", size: "sm", flex: 2 }, { type: "text", text: order.status, color: "#e74c3c", weight: "bold", size: "sm", flex: 5 } ] }, { type: "box", layout: "horizontal", contents: [ { type: "text", text: "商品明細", color: "#888888", size: "sm", flex: 2 }, { type: "text", text: order.itemName, color: "#111111", size: "sm", flex: 5, wrap: true } ] }, { type: "separator", margin: "md", color: "#d4af37" }, { type: "box", layout: "horizontal", margin: "md", contents: [ { type: "text", text: "總計金額", color: "#888888", size: "sm", flex: 2 }, { type: "text", text: `NT$ ${order.price}`, color: "#d4af37", weight: "bold", size: "md", flex: 5 } ] } ]}, footer: { type: "box", layout: "vertical", contents: [ { type: "button", style: "primary", color: "#d4af37", action: { type: "uri", label: "查看訂單詳情", uri: "https://duolanmu.com/admin.html" } } ]} } };
 }
-
 function productBubble(p) {
     const imgUrl = p.photoBase64 && p.photoBase64.startsWith('http') ? p.photoBase64 : "https://via.placeholder.com/300x300/1a0b2e/d4af37?text=DouLanMu";
-    return {
-        type: "bubble", size: "micro",
-        hero: { type: "image", url: imgUrl, size: "full", aspectRatio: "1:1", aspectMode: "cover" },
-        body: { type: "box", layout: "vertical", paddingAll: "15px", contents: [
-            { type: "text", text: p.name, weight: "bold", size: "md", wrap: true },
-            { type: "text", text: `NT$ ${p.price}`, color: "#d4af37", weight: "bold", size: "sm", margin: "md" }
-        ]},
-        footer: { type: "box", layout: "vertical", spacing: "sm", contents: [
-            { type: "button", style: "primary", color: "#1a0b2e", action: { type: "uri", label: "前往選購", uri: `https://duolanmu.com/shop.html?category=${p.category || 'product'}` } }
-        ]}
-    };
+    return { type: "bubble", size: "micro", hero: { type: "image", url: imgUrl, size: "full", aspectRatio: "1:1", aspectMode: "cover" }, body: { type: "box", layout: "vertical", paddingAll: "15px", contents: [ { type: "text", text: p.name, weight: "bold", size: "md", wrap: true }, { type: "text", text: `NT$ ${p.price}`, color: "#d4af37", weight: "bold", size: "sm", margin: "md" } ]}, footer: { type: "box", layout: "vertical", spacing: "sm", contents: [ { type: "button", style: "primary", color: "#1a0b2e", action: { type: "uri", label: "前往選購", uri: `https://duolanmu.com/shop.html?category=${p.category || 'product'}` } } ]} };
 }
-
 function fallbackCard() {
-    return {
-        type: "flex", altText: "朵藍姆光商城 - 服務選單",
-        contents: {
-            type: "bubble",
-            header: { type: "box", layout: "vertical", backgroundColor: "#0f051a", contents: [
-                { type: "text", text: "朵藍姆光工作室", weight: "bold", color: "#d4af37", align: "center" }
-            ]},
-            body: { type: "box", layout: "vertical", contents: [
-                { type: "text", text: "您好！目前我還在學習您的宇宙語 💫\n請問您需要什麼協助呢？", wrap: true, color: "#666666", size: "sm", align: "center" }
-            ]},
-            footer: { type: "box", layout: "vertical", spacing: "sm", contents: [
-                { type: "button", style: "primary", color: "#d4af37", action: { type: "message", label: "📦 查詢我的訂單", text: "我想查詢訂單進度" } },
-                { type: "button", style: "primary", color: "#d4af37", action: { type: "message", label: "🌿 熱賣商品推薦", text: "有什麼推薦的商品嗎？" } },
-                { type: "button", style: "secondary", action: { type: "uri", label: "✨ 前往官方商城", uri: "https://duolanmu.com" } }
-            ]}
-        }
-    };
+    return { type: "flex", altText: "朵藍姆光商城 - 服務選單", contents: { type: "bubble", header: { type: "box", layout: "vertical", backgroundColor: "#0f051a", contents: [ { type: "text", text: "朵藍姆光工作室", weight: "bold", color: "#d4af37", align: "center" } ]}, body: { type: "box", layout: "vertical", contents: [ { type: "text", text: "您好！目前我還在學習您的宇宙語 💫\n請問您需要什麼協助呢？", wrap: true, color: "#666666", size: "sm", align: "center" } ]}, footer: { type: "box", layout: "vertical", spacing: "sm", contents: [ { type: "button", style: "primary", color: "#d4af37", action: { type: "message", label: "📦 查詢我的訂單", text: "我想查詢訂單進度" } }, { type: "button", style: "primary", color: "#d4af37", action: { type: "message", label: "🌿 熱賣商品推薦", text: "有什麼推薦的商品嗎？" } }, { type: "button", style: "secondary", action: { type: "uri", label: "✨ 前往官方商城", uri: "https://duolanmu.com" } } ]} } };
 }
-
 function simpleTextCard(title, text, btnLabel, btnUri) {
-    return {
-        type: "flex", altText: title,
-        contents: {
-            type: "bubble",
-            body: { type: "box", layout: "vertical", spacing: "md", contents: [
-                { type: "text", text: title, weight: "bold", color: "#d4af37", size: "lg" },
-                { type: "text", text: text, wrap: true, color: "#666666", size: "sm" }
-            ]},
-            footer: { type: "box", layout: "vertical", contents: [
-                { type: "button", style: "primary", color: "#1a0b2e", action: { type: "uri", label: btnLabel, uri: btnUri } }
-            ]}
-        }
-    };
+    return { type: "flex", altText: title, contents: { type: "bubble", body: { type: "box", layout: "vertical", spacing: "md", contents: [ { type: "text", text: title, weight: "bold", color: "#d4af37", size: "lg" }, { type: "text", text: text, wrap: true, color: "#666666", size: "sm" } ]}, footer: { type: "box", layout: "vertical", contents: [ { type: "button", style: "primary", color: "#1a0b2e", action: { type: "uri", label: btnLabel, uri: btnUri } } ]} } };
 }
